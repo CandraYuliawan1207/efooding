@@ -42,14 +42,32 @@ $pengajuan_terakhir = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <?php include '../components/header.php'; ?>
 <div class="row">
     <div class="col-md-12">
-        <h2 class="mb-4">Dashboard User</h2>
+        <div class="welcome-card card bg-gradient-primary text-white mb-4 fade-in">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="card-title">Selamat Datang, <?php echo $_SESSION['username']; ?>!</h2>
+                        <p class="card-text">Anda login dari departemen <?php echo $_SESSION['department']; ?>. Silakan ajukan fooding atau lihat riwayat pengajuan Anda.</p>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <i class="fas fa-utensils fa-4x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="row">
+<div class="row fade-in">
+    <div class="col-md-12">
+        <h3 class="mb-4">Statistik Pengajuan</h3>
+    </div>
+</div>
+
+<div class="row fade-in">
     <!-- Statistik Card -->
     <div class="col-md-4 mb-4">
-        <div class="card stat-card bg-primary text-white">
+        <div class="card stat-card bg-primary text-white smooth-hover">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
@@ -57,15 +75,15 @@ $pengajuan_terakhir = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <h2 class="card-stat"><?php echo $total; ?></h2>
                     </div>
                     <div class="flex-shrink-0">
-                        <i class="fas fa-clipboard-list fa-3x"></i>
+                        <i class="fas fa-clipboard-list fa-3x opacity-50"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-4 mb-4">
-        <div class="card stat-card bg-warning text-dark">
+        <div class="card stat-card bg-warning text-dark smooth-hover">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
@@ -73,15 +91,15 @@ $pengajuan_terakhir = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <h2 class="card-stat"><?php echo $menunggu; ?></h2>
                     </div>
                     <div class="flex-shrink-0">
-                        <i class="fas fa-clock fa-3x"></i>
+                        <i class="fas fa-clock fa-3x opacity-50"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-4 mb-4">
-        <div class="card stat-card bg-success text-white">
+        <div class="card stat-card bg-success text-white smooth-hover">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
@@ -89,7 +107,7 @@ $pengajuan_terakhir = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <h2 class="card-stat"><?php echo $disetujui; ?></h2>
                     </div>
                     <div class="flex-shrink-0">
-                        <i class="fas fa-check-circle fa-3x"></i>
+                        <i class="fas fa-check-circle fa-3x opacity-50"></i>
                     </div>
                 </div>
             </div>
@@ -97,11 +115,11 @@ $pengajuan_terakhir = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 </div>
 
-<div class="row">
+<div class="row fade-in">
     <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">Pengajuan Terakhir</h5>
+        <div class="card smooth-hover">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0"><i class="fas fa-history me-2"></i>Pengajuan Terakhir</h5>
             </div>
             <div class="card-body">
                 <?php if (count($pengajuan_terakhir) > 0): ?>
@@ -120,7 +138,7 @@ $pengajuan_terakhir = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <td><?php echo formatDateIndonesian($pengajuan['tanggal']); ?></td>
                                         <td><?php echo $pengajuan['jumlah']; ?> paket</td>
                                         <td>
-                                            <?php 
+                                            <?php
                                             $badge_class = '';
                                             switch ($pengajuan['status']) {
                                                 case 'Menunggu':
@@ -145,36 +163,39 @@ $pengajuan_terakhir = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </table>
                     </div>
                 <?php else: ?>
-                    <p class="text-muted">Belum ada pengajuan fooding.</p>
+                    <div class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Belum ada pengajuan fooding.</p>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">Aksi Cepat</h5>
+        <div class="card smooth-hover">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0"><i class="fas fa-bolt me-2"></i>Aksi Cepat</h5>
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <a href="ajukan.php" class="btn btn-primary mb-2">
+                    <a href="ajukan.php" class="btn btn-primary mb-3 py-3">
                         <i class="fas fa-plus me-2"></i>Ajukan Fooding
                     </a>
-                    <a href="riwayat.php" class="btn btn-outline-primary mb-2">
+                    <a href="riwayat.php" class="btn btn-outline-primary mb-3 py-3">
                         <i class="fas fa-history me-2"></i>Lihat Riwayat
                     </a>
                 </div>
             </div>
         </div>
-        
+
         <!-- Notifikasi -->
-        <div class="card mt-4">
-            <div class="card-header">
-                <h5 class="card-title">Notifikasi Terbaru</h5>
+        <div class="card smooth-hover mt-4">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0"><i class="fas fa-bell me-2"></i>Notifikasi Terbaru</h5>
             </div>
-            <div class="card-body" id="notifications-container">
-                <div class="text-center">
+            <div class="card-body p-0" id="notifications-container">
+                <div class="text-center py-4">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
@@ -185,25 +206,25 @@ $pengajuan_terakhir = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </div>
 
 <script>
-// AJAX untuk notifikasi
-function loadNotifications() {
-    $.ajax({
-        url: '../ajax/get_notifications.php',
-        type: 'GET',
-        success: function(response) {
-            $('#notifications-container').html(response);
-        },
-        error: function() {
-            $('#notifications-container').html('<p class="text-muted">Gagal memuat notifikasi.</p>');
-        }
-    });
-}
+    /// AJAX untuk notifikasi
+    function loadNotifications() {
+        $.ajax({
+            url: '../ajax/get_notifications.php',
+            type: 'GET',
+            success: function(response) {
+                $('#notifications-container').html(response);
+            },
+            error: function() {
+                $('#notifications-container').html('<div class="p-3 text-center text-muted"><i class="fas fa-exclamation-circle me-2"></i>Gagal memuat notifikasi.</div>');
+            }
+        });
+    }
 
-// Muat notifikasi pertama kali
-loadNotifications();
+    // Muat notifikasi pertama kali
+    loadNotifications();
 
-// Polling notifikasi setiap 30 detik
-setInterval(loadNotifications, 30000);
+    // Polling notifikasi setiap 3 detik
+    setInterval(loadNotifications, 3000);
 </script>
 
 <?php include '../components/footer.php'; ?>

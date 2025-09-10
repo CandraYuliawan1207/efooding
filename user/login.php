@@ -22,31 +22,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $db = $database->getConnection();
         
         // Query untuk mencari user
-        $query = "SELECT * FROM users WHERE username = :username";
+        $query = "SELECT * FROM users WHERE username = :username AND password = :password";
         $stmt = $db->prepare($query);
         $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':password', $password);
         $stmt->execute();
         
         if ($stmt->rowCount() == 1) {
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Verifikasi password
-            if (verifyPassword($password, $user['password'])) {
-                // Set session
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['username'] = $user['username'];
-                $_SESSION['department'] = $user['department'];
-                $_SESSION['role'] = $user['role'];
-                
-                // Redirect ke dashboard
-                setNotification('Login berhasil!', 'success');
-                header("Location: dashboard.php");
-                exit();
-            } else {
-                setNotification('Password salah', 'error');
-            }
+            // Login berhasil
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['department'] = $user['department'];
+            $_SESSION['role'] = $user['role'];
+            
+            // Redirect ke dashboard
+            setNotification('Login berhasil!', 'success');
+            header("Location: dashboard.php");
+            exit();
         } else {
-            setNotification('Username tidak ditemukan', 'error');
+            setNotification('Username atau password salah', 'error');
         }
     }
 }

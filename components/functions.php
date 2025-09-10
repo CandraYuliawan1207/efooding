@@ -27,15 +27,15 @@ function isAdminLoggedIn() {
     return isset($_SESSION['admin_id']);
 }
 
-// Hash password
-function hashPassword($password) {
-    return password_hash($password, PASSWORD_DEFAULT);
-}
+// // Hash password
+// function hashPassword($password) {
+//     return password_hash($password, PASSWORD_DEFAULT);
+// }
 
-// Verifikasi password
-function verifyPassword($password, $hashedPassword) {
-    return password_verify($password, $hashedPassword);
-}
+// // Verifikasi password
+// function verifyPassword($password, $hashedPassword) {
+//     return password_verify($password, $hashedPassword);
+// }
 
 // Set notifikasi
 function setNotification($message, $type = 'info') {
