@@ -1,15 +1,21 @@
 <?php
-// Koneksi ke database dengan PDO
-$host = 'localhost';
-$db = 'efooding_db';
-$user = 'root';  // ganti dengan username DB
-$pass = '';  // ganti dengan password DB
+class Database {
+    private $host = "localhost";
+    private $db_name = "efooding_db";
+    private $username = "root";
+    private $password = "admin";
+    public $conn;
 
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$db", $user, $pass);
-    // Set error mode untuk menampilkan error
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Koneksi gagal: " . $e->getMessage());
+    public function getConnection() {
+        $this->conn = null;
+        try {
+            $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username, $this->password);
+            $this->conn->exec("set names utf8");
+            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        } catch(PDOException $exception) {
+            echo "Connection error: " . $exception->getMessage();
+        }
+        return $this->conn;
+    }
 }
 ?>
