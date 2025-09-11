@@ -1,190 +1,110 @@
 <?php
-require_once '../components/functions.php';
-requireLogin();
+// user/ajukan.php - SIMPLE VERSION
+session_start();
 
-// Koneksi database
+// Include yang diperlukan
 require_once '../components/connect.php';
+
+// Redirect jika belum login
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
 $database = new Database();
 $db = $database->getConnection();
 
-// Ambil data stok untuk validasi
-$query = "SELECT * FROM stock WHERE item_name IN ('Indomie', 'Kopi')";
-$stmt = $db->prepare($query);
-$stmt->execute();
-$stok = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Siapkan data stok
-$stok_indomie = 0;
-$stok_kopi = 0;
-
-foreach ($stok as $item) {
-    if ($item['item_name'] == 'Indomie') {
-        $stok_indomie = $item['quantity'];
-    } elseif ($item['item_name'] == 'Kopi') {
-        $stok_kopi = $item['quantity'];
-    }
-}
-
-// Hitung maksimal paket yang bisa diajukan (terbatas oleh stok)
-$max_paket = min(floor($stok_indomie / 1), floor($stok_kopi / 1));
-
-// Proses pengajuan fooding
+// PROSES PENGAJUAN
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['ajukan_fooding'])) {
     $jumlah = (int)$_POST['jumlah'];
+    $user_id = $_SESSION['user_id'];
     
-    // Validasi jumlah
-    if ($jumlah <= 0) {
-        setNotification('Jumlah paket harus lebih dari 0', 'error');
-    } elseif ($jumlah > $max_paket) {
-        setNotification('Stok tidak mencukupi. Maksimal ' . $max_paket . ' paket', 'error');
-    } else {
-        // Mulai transaction
-        $db->beginTransaction();
+    // SIMPAN KE DATABASE
+    try {
+        // 1. Simpan pengajuan
+        $query = "INSERT INTO fooding_requests (user_id, jumlah, status) VALUES (?, ?, 'Menunggu')";
+        $stmt = $db->prepare($query);
+        $stmt->execute([$user_id, $jumlah]);
         
-        try {
-            // 1. Simpan pengajuan ke database
-            $user_id = $_SESSION['user_id'];
-            $status = 'Menunggu';
-            
-            $query = "INSERT INTO fooding_requests (user_id, jumlah, status) VALUES (:user_id, :jumlah, :status)";
-            $stmt = $db->prepare($query);
-            $stmt->bindParam(':user_id', $user_id);
-            $stmt->bindParam(':jumlah', $jumlah);
-            $stmt->bindParam(':status', $status);
-            $stmt->execute();
-            
-            // 2. Kurangi stok Indomie
-            $query = "UPDATE stock SET quantity = quantity - :jumlah WHERE item_name = 'Indomie'";
-            $stmt = $db->prepare($query);
-            $stmt->bindParam(':jumlah', $jumlah);
-            $stmt->execute();
-            
-            // 3. Kurangi stok Kopi
-            $query = "UPDATE stock SET quantity = quantity - :jumlah WHERE item_name = 'Kopi'";
-            $stmt = $db->prepare($query);
-            $stmt->bindParam(':jumlah', $jumlah);
-            $stmt->execute();
-            
-            // 4. Buat notifikasi untuk user
-            $message = "Pengajuan fooding " . $jumlah . " paket berhasil dikirim. Status: Menunggu";
-            $query = "INSERT INTO notifications (user_id, message) VALUES (:user_id, :message)";
-            $stmt = $db->prepare($query);
-            $stmt->bindParam(':user_id', $user_id);
-            $stmt->bindParam(':message', $message);
-            $stmt->execute();
-            
-            // Commit transaction
-            $db->commit();
-            
-            setNotification('Pengajuan fooding berhasil dikirim!', 'success');
-            header("Location: dashboard.php");
-            exit();
-            
-        } catch (Exception $e) {
-            // Rollback transaction jika ada error
-            $db->rollBack();
-            setNotification('Gagal mengajukan fooding: ' . $e->getMessage(), 'error');
-        }
+        // 2. Kurangi stok
+        $stmt = $db->prepare("UPDATE stock SET quantity = quantity - ? WHERE item_name = 'Indomie'");
+        $stmt->execute([$jumlah]);
+        
+        $stmt = $db->prepare("UPDATE stock SET quantity = quantity - ? WHERE item_name = 'Kopi'");
+        $stmt->execute([$jumlah]);
+        
+        // Redirect ke dashboard
+        header("Location: dashboard.php?success=1");
+        exit();
+        
+    } catch (Exception $e) {
+        $error = "Error: " . $e->getMessage();
     }
 }
+
+// Ambil data stok
+$stok_indomie = 100;
+$stok_kopi = 100;
+
+try {
+    $stmt = $db->prepare("SELECT * FROM stock WHERE item_name IN ('Indomie', 'Kopi')");
+    $stmt->execute();
+    $stok = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    foreach ($stok as $item) {
+        if ($item['item_name'] == 'Indomie') $stok_indomie = $item['quantity'];
+        if ($item['item_name'] == 'Kopi') $stok_kopi = $item['quantity'];
+    }
+} catch (Exception $e) {
+    // Gunakan nilai default jika error
+}
+
+$max_paket = min($stok_indomie, $stok_kopi);
 ?>
 
 <?php include '../components/header.php'; ?>
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card smooth-hover">
-            <div class="card-header bg-white">
-                <h2 class="card-title mb-0"><i class="fas fa-utensils me-2"></i>Ajukan Fooding</h2>
-            </div>
-            <div class="card-body">
-                <!-- Info Stok -->
-                <div class="alert alert-info">
-                    <h5><i class="fas fa-info-circle me-2"></i>Informasi Stok</h5>
-                    <p>1 paket fooding = 1 Indomie + 1 Kopi</p>
-                    <div class="row mt-3">
-                        <div class="col-md-6">
-                            <div class="d-flex justify-content-between">
-                                <span>Stok Indomie:</span>
-                                <strong><?php echo $stok_indomie; ?> pcs</strong>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex justify-content-between">
-                                <span>Stok Kopi:</span>
-                                <strong><?php echo $stok_kopi; ?> pcs</strong>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-3 p-3 bg-light rounded">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="fw-bold">Maksimal paket yang dapat diajukan:</span>
-                            <span class="badge bg-primary fs-6"><?php echo $max_paket; ?> paket</span>
-                        </div>
-                    </div>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Ajukan Fooding</h4>
                 </div>
                 
-                <!-- Form Pengajuan -->
-                <form method="POST" action="">
-                    <div class="mb-4">
-                        <label for="jumlah" class="form-label fs-5">Jumlah Paket Fooding</label>
-                        <div class="input-group input-group-lg">
-                            <span class="input-group-text"><i class="fas fa-box-open"></i></span>
-                            <input type="number" class="form-control" id="jumlah" name="jumlah" 
-                                   min="1" max="<?php echo $max_paket; ?>" 
-                                   required value="<?php echo isset($_POST['jumlah']) ? $_POST['jumlah'] : 1; ?>">
-                            <span class="input-group-text">paket</span>
-                        </div>
-                        <div class="form-text">Masukkan jumlah paket yang ingin diajukan (maksimal <?php echo $max_paket; ?> paket)</div>
+                <div class="card-body">
+                    <?php if (isset($error)): ?>
+                    <div class="alert alert-danger"><?php echo $error; ?></div>
+                    <?php endif; ?>
+
+                    <!-- Info Stok -->
+                    <div class="alert alert-info">
+                        <strong>Stok Tersedia:</strong><br>
+                        Indomie: <?php echo $stok_indomie; ?> pcs<br>
+                        Kopi: <?php echo $stok_kopi; ?> pcs<br>
+                        <strong>Maksimal: <?php echo $max_paket; ?> paket</strong>
                     </div>
-                    
-                    <div class="d-grid">
-                        <button type="submit" name="ajukan_fooding" class="btn btn-primary btn-lg py-3">
-                            <i class="fas fa-paper-plane me-2"></i>Ajukan Fooding
+
+                    <!-- Form Sederhana -->
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">Jumlah Paket</label>
+                            <input type="number" class="form-control" name="jumlah" 
+                                   value="1" min="1" max="<?php echo $max_paket; ?>" required>
+                        </div>
+                        
+                        <button type="submit" name="ajukan_fooding" class="btn btn-primary w-100">
+                            Ajukan Fooding
                         </button>
-                    </div>
-                </form>
-                
-                <!-- Detail Paket -->
-                <div class="mt-5">
-                    <h4 class="mb-3">Detail Paket Fooding</h4>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-utensils fa-3x text-secondary mb-3"></i>
-                                    <h5>Indomie</h5>
-                                    <p class="mb-0">1 bungkus per paket</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <i class="fas fa-coffee fa-3x text-secondary mb-3"></i>
-                                    <h5>Kopi</h5>
-                                    <p class="mb-0">1 sachet per paket</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    </form>
                 </div>
+            </div>
+
+            <div class="text-center mt-3">
+                <a href="dashboard.php" class="btn btn-secondary">Kembali</a>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-// Validasi real-time
-document.getElementById('jumlah').addEventListener('input', function() {
-    const max = <?php echo $max_paket; ?>;
-    const value = parseInt(this.value);
-    
-    if (value > max) {
-        this.setCustomValidity('Maksimal ' + max + ' paket');
-    } else {
-        this.setCustomValidity('');
-    }
-});
-</script>
 
 <?php include '../components/footer.php'; ?>

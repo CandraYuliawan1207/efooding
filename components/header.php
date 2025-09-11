@@ -4,28 +4,30 @@ require_once 'functions.php';
 ?>
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Fooding - PT. Selatan Agro Makmur Lestari</title>
-    
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- Custom CSS -->
-    <link href="../assets/css/style.css" rel="stylesheet">
-    
+    <link href="../assets/css/style.css?v=<?php echo time(); ?>" rel="stylesheet">
+
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
     <!-- Loader -->
     <div class="loader-wrapper" id="loader">
@@ -39,7 +41,7 @@ require_once 'functions.php';
     </div>
 
     <!-- Header Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background: rgba(0, 0, 0, 0.95);">
         <div class="container">
             <a class="navbar-brand" href="../index.php">
                 <div class="brand-logo">
@@ -95,7 +97,7 @@ require_once 'functions.php';
                     <?php if (isLoggedIn()): ?>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle user-menu" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                                <div class="user-avatar" style="text-align: center;">
+                                <div class="user-avatar">
                                     <i class="fas fa-user-circle"></i>
                                 </div>
                                 <div class="user-info">
@@ -109,7 +111,9 @@ require_once 'functions.php';
                                         <i class="fas fa-user me-2"></i>Profil
                                     </a>
                                 </li>
-                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
                                 <li>
                                     <a class="dropdown-item" href="../user/logout.php">
                                         <i class="fas fa-sign-out-alt me-2"></i>Logout
@@ -134,7 +138,9 @@ require_once 'functions.php';
                                         <i class="fas fa-cog me-2"></i>Pengaturan
                                     </a>
                                 </li>
-                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
                                 <li>
                                     <a class="dropdown-item" href="../admin/logout.php">
                                         <i class="fas fa-sign-out-alt me-2"></i>Logout

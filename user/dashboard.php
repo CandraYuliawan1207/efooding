@@ -50,7 +50,8 @@ $pengajuan_terakhir = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <p class="card-text">Anda login dari departemen <?php echo $_SESSION['department']; ?>. Silakan ajukan fooding atau lihat riwayat pengajuan Anda.</p>
                     </div>
                     <div class="col-md-4 text-center">
-                        <i class="fas fa-utensils fa-4x opacity-50"></i>
+                    <img src="../assets/images/welcome.png" alt="Welcome Icon" 
+                    class="img-fluid opacity-80" style="max-width: 100px;">
                     </div>
                 </div>
             </div>

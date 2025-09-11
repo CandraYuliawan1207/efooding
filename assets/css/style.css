@@ -92,12 +92,19 @@ h6,
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
     padding: 0.8rem 0;
     transition: var(--smooth-transition);
+    z-index: 1030;
 }
 
 .navbar-brand {
     font-weight: 700;
     font-size: 1.5rem;
-    color: var(--primary-color) !important;
+    color: var(--light-color) !important;
+    transition: var(--smooth-transition);
+}
+
+.navbar-brand:hover {
+    background: rgba(67, 97, 238, 0.1);
+    color: var(--primary-color);
 }
 
 .brand-logo {
@@ -106,7 +113,7 @@ h6,
 }
 
 .navbar-dark .navbar-nav .nav-link {
-    color: var(--dark-color);
+    color: var(--light-color);
     font-weight: 500;
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
@@ -140,7 +147,7 @@ h6,
 
 .user-avatar {
     width: 40px;
-    height: 60px;
+    height: 40px;
     border-radius: 50%;
     background: var(--primary-color);
     color: white;
@@ -151,8 +158,15 @@ h6,
     font-size: 1.2rem;
 }
 
+.user-avatar>i {
+    font-size: 1.5rem;
+    margin-left: auto;
+}
+
 .user-avatar.admin {
-    background: var(--accent-color);
+    background: var(--dark-color);
+    display: flex;
+    align-items: center;
 }
 
 .user-info {
@@ -203,6 +217,7 @@ h6,
 
 .card-body {
     padding: 1.5rem;
+    color: var(--dark-color);
 }
 
 
