@@ -137,7 +137,7 @@ $stok = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <!-- Grafik Tren Pengajuan -->
         <div class="card smooth-hover">
             <div class="card-header bg-white">
-                <h5 class="card-title mb-0"><i class="fas fa-chart-line me-2"></i>Tren Pengajuan 7 Hari Terakhir</h5>
+                <h5 class="card-title mb-0"><i class="fas fa-chart-line me-2"></i>Grafik Pengajuan 7 Hari Terakhir</h5>
             </div>
             <div class="card-body">
                 <canvas id="trenChart" height="250"></canvas>

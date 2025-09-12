@@ -215,7 +215,7 @@ foreach ($stats as $stat) {
                                         </td>
                                         <td>
                                             <?php if ($r['status'] == 'Disetujui'): ?>
-                                                <span class="text-success"><i class="fas fa-check-circle me-1"></i>Dapat diambil di pantry</span>
+                                                <span class="text-success"><i class="fas fa-check-circle me-1"></i>Dapat diambil di waserda</span>
                                             <?php elseif ($r['status'] == 'Ditolak'): ?>
                                                 <span class="text-danger"><i class="fas fa-times-circle me-1"></i>Silakan hubungi admin</span>
                                             <?php else: ?>
