@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <div class="card shadow">
             <div class="card-body p-5">
                 <div class="text-center mb-4">
-                    <img src="../assets/images/logo.png" alt="Logo" height="60">
+                    <img src="../assets/images/logo.svg" alt="Logo" height="60">
                     <h3 class="mt-3">Login Admin</h3>
                     <p class="text-muted">Masuk ke sistem admin E-Fooding</p>
                 </div>
