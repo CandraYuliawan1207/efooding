@@ -60,7 +60,7 @@ $stok = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <div class="card-body">
                 <div class="row align-items-center">
                     <div class="col-md-8">
-                        <h2 class="card-title">Selamat Datang, Admin <?php echo $_SESSION['admin_username']; ?>!</h2>
+                        <h2 class="card-title">Selamat Datang, <?php echo $_SESSION['admin_username']; ?>!</h2>
                         <p class="card-text">Anda login sebagai administrator sistem E-Fooding. Kelola pengajuan, stok, dan lihat laporan.</p>
                     </div>
                     <div class="col-md-4 text-center">
