@@ -216,7 +216,7 @@ $stok = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <i class="fas fa-tasks me-2"></i>Kelola Pengajuan
                     </a>
                     <a href="stock.php" class="btn btn-success mb-3 py-3">
-                        <i class="fas fa-boxes me-2"></i>Kelola Stok
+                        <i class="fas fa-boxes me-2"></i>Kelola Stock
                     </a>
                     <a href="laporan.php" class="btn btn-info mb-3 py-3">
                         <i class="fas fa-chart-bar me-2"></i>Lihat Laporan
