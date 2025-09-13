@@ -2,9 +2,9 @@
 class Database
 {
     private $host = "localhost";
-    private $db_name = "efooding_db";
-    private $username = "root";
-    private $password = "admin";
+    private $db_name = "u754203950_efooding_db";
+    private $username = "u754203950_efoodingsystem";
+    private $password = "Efoodingsystem1207$";
     public $conn;
 
     public function getConnection()
