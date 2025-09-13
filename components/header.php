@@ -91,6 +91,11 @@ require_once 'functions.php';
                                 <i class="fas fa-chart-bar me-1"></i>Laporan
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="../admin/manage_users.php">
+                                <i class="fas fa-users me-1"></i>Users
+                            </a>
+                        </li>
                     <?php endif; ?>
                 </ul>
                 <ul class="navbar-nav ms-auto">
