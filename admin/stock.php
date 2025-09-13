@@ -283,9 +283,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['hapus_stok'])) {
             </div>
         </div>
     <?php endforeach; ?>
+    <?php include '../components/footer.php'; ?>
 
-    <!-- JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Auto-close alerts setelah 5 detik
         setTimeout(() => {
@@ -364,7 +363,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['hapus_stok'])) {
             }
         });
     </script>
-    <?php include '../components/footer.php'; ?>
 </body>
 
 </html>

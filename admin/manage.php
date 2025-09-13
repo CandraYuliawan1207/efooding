@@ -428,8 +428,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
         </div>
     <?php endforeach; ?>
 
-    <!-- JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <?php include '../components/footer.php'; ?>
+
     <script>
         // Toggle filter form
         document.getElementById('filterToggle').addEventListener('click', function() {
@@ -513,7 +513,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
             }
         });
     </script>
-    <?php include '../components/footer.php'; ?>
+
 </body>
 
 </html>
