@@ -70,6 +70,12 @@ require_once 'functions.php';
                                 <i class="fas fa-history me-1"></i>Riwayat
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="../user/notifikasi.php">
+                                <i class="fas fa-bell me-1"></i>Notifikasi
+                                <span class="badge bg-danger" id="notification-badge" style="display: none;">0</span>
+                            </a>
+                        </li>
                     <?php elseif (isAdminLoggedIn()): ?>
                         <li class="nav-item">
                             <a class="nav-link" href="../admin/dashboard.php">

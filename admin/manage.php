@@ -73,13 +73,42 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
         $user_id = $pengajuan_data['user_id'];
         $jumlah = $pengajuan_data['jumlah'];
 
-        // 3. Buat notifikasi untuk user
-        $message = "Status pengajuan fooding " . $jumlah . " paket diubah menjadi: " . $new_status;
-        $query = "INSERT INTO notifications (user_id, message) VALUES (:user_id, :message)";
-        $stmt = $db->prepare($query);
-        $stmt->bindParam(':user_id', $user_id);
-        $stmt->bindParam(':message', $message);
-        $stmt->execute();
+        // 3. Buat notifikasi untuk user dengan pesan yang lebih informatif
+        $message = "";
+
+        switch ($new_status) {
+            case 'Diperiksa':
+                $message = "Pengajuan fooding " . $jumlah . " paket sedang diperiksa oleh admin";
+                break;
+            case 'Disetujui':
+                $message = "Pengajuan fooding " . $jumlah . " paket telah disetujui. Silahkan ambil ke Waserda";
+                break;
+            case 'Ditolak':
+                $message = "Pengajuan fooding " . $jumlah . " paket ditolak. Hubungi admin untuk informasi lebih lanjut";
+                break;
+            default:
+                $message = "Status pengajuan fooding diubah menjadi: " . $new_status;
+        }
+
+        $notifQuery = "INSERT INTO notifications (user_id, message, status, timestamp) 
+                       VALUES (:user_id, :message, 'unread', NOW())";
+        $notifStmt = $db->prepare($notifQuery);
+        $notifStmt->bindParam(':user_id', $user_id);
+        $notifStmt->bindParam(':message', $message);
+        $notifStmt->execute();
+
+        // 4. Jika status Ditolak, kembalikan stok
+        if ($new_status == 'Ditolak') {
+            $query = "UPDATE stock SET quantity = quantity + :jumlah WHERE item_name = 'Indomie'";
+            $stmt = $db->prepare($query);
+            $stmt->bindParam(':jumlah', $jumlah);
+            $stmt->execute();
+
+            $query = "UPDATE stock SET quantity = quantity + :jumlah WHERE item_name = 'Kopi'";
+            $stmt = $db->prepare($query);
+            $stmt->bindParam(':jumlah', $jumlah);
+            $stmt->execute();
+        }
 
         // Commit transaction
         $db->commit();

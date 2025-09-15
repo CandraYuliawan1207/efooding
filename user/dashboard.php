@@ -37,9 +37,46 @@ $stmt = $db->prepare($query);
 $stmt->bindParam(':user_id', $user_id);
 $stmt->execute();
 $pengajuan_terakhir = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// PROSES: Tandai semua notifikasi sebagai sudah dibaca
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['mark_all_read'])) {
+    try {
+        $updateQuery = "UPDATE notifications SET status = 'read' 
+                      WHERE user_id = :user_id AND status = 'unread'";
+        $updateStmt = $db->prepare($updateQuery);
+        $updateStmt->bindParam(':user_id', $user_id);
+
+        if ($updateStmt->execute()) {
+            setNotification('Semua notifikasi ditandai sudah dibaca', 'success');
+            header("Location: dashboard.php");
+            exit();
+        }
+    } catch (Exception $e) {
+        setNotification('Gagal menandai notifikasi: ' . $e->getMessage(), 'error');
+    }
+}
+
+// Ambil notifikasi
+$notifQuery = "SELECT * FROM notifications 
+               WHERE user_id = :user_id 
+               ORDER BY timestamp DESC 
+               LIMIT 10";
+$notifStmt = $db->prepare($notifQuery);
+$notifStmt->bindParam(':user_id', $user_id);
+$notifStmt->execute();
+$notifications = $notifStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Hitung notifikasi unread untuk badge
+$unreadCount = 0;
+foreach ($notifications as $notif) {
+    if ($notif['status'] == 'unread') {
+        $unreadCount++;
+    }
+}
 ?>
 
 <?php include '../components/header.php'; ?>
+
 <div class="row">
     <div class="col-md-12">
         <div class="welcome-card card bg-gradient-primary text-white mb-4 fade-in">
@@ -50,8 +87,8 @@ $pengajuan_terakhir = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <p class="card-text">Anda login dari departemen <?php echo $_SESSION['department']; ?>. Silakan ajukan fooding atau lihat riwayat pengajuan Anda.</p>
                     </div>
                     <div class="col-md-4 text-center">
-                    <img src="../assets/images/welcome.png" alt="Welcome Icon" 
-                    class="img-fluid opacity-80" style="max-width: 100px;">
+                        <img src="../assets/images/welcome.png" alt="Welcome Icon"
+                            class="img-fluid opacity-80" style="max-width: 100px;">
                     </div>
                 </div>
             </div>
@@ -192,40 +229,88 @@ $pengajuan_terakhir = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         <!-- Notifikasi -->
         <div class="card smooth-hover mt-4">
-            <div class="card-header bg-white">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0"><i class="fas fa-bell me-2"></i>Notifikasi Terbaru</h5>
+                <?php if ($unreadCount > 0): ?>
+                    <span class="badge bg-danger"><?php echo $unreadCount; ?> baru</span>
+                <?php endif; ?>
             </div>
-            <div class="card-body p-0" id="notifications-container">
-                <div class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
+            <div class="card-body p-0">
+                <?php if (count($notifications) > 0): ?>
+
+                    <!-- Tombol Tandai Sudah Dibaca Semua -->
+                    <?php if ($unreadCount > 0): ?>
+                        <div class="p-2 bg-light border-bottom text-center">
+                            <form method="POST">
+                                <button type="submit" name="mark_all_read" class="btn btn-sm btn-success">
+                                    <i class="fas fa-check-circle me-1"></i>Tandai Sudah Dibaca Semua
+                                </button>
+                            </form>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Daftar Notifikasi (MAKSIMAL 3) -->
+                    <?php
+                    $displayNotifications = array_slice($notifications, 0, 3);
+                    foreach ($displayNotifications as $notif): ?>
+                        <div class="notification-item p-3 border-bottom">
+                            <div class="d-flex align-items-start">
+                                <div class="flex-grow-1">
+                                    <?php if ($notif['status'] == 'unread'): ?>
+                                        <span class="badge bg-danger float-end">Baru</span>
+                                    <?php endif; ?>
+                                    <p class="mb-1"><?php echo htmlspecialchars($notif['message']); ?></p>
+                                    <small class="text-muted">
+                                        <?php echo date('d M Y H:i', strtotime($notif['timestamp'])); ?>
+                                    </small>
+                                </div>
+                                <div class="flex-shrink-0 ms-2">
+                                    <?php
+                                    $icon = 'fa-bell';
+                                    $color = 'text-warning';
+                                    if (strpos($notif['message'], 'disetujui') !== false) {
+                                        $icon = 'fa-check-circle';
+                                        $color = 'text-success';
+                                    } elseif (strpos($notif['message'], 'ditolak') !== false) {
+                                        $icon = 'fa-times-circle';
+                                        $color = 'text-danger';
+                                    } elseif (strpos($notif['message'], 'diperiksa') !== false) {
+                                        $icon = 'fa-search';
+                                        $color = 'text-info';
+                                    }
+                                    ?>
+                                    <i class="fas <?php echo $icon; ?> <?php echo $color; ?>"></i>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+
+                    <!-- Tombol Lihat Semua Notifikasi -->
+                    <?php if (count($notifications) > 3): ?>
+                        <div class="p-3 text-center bg-light">
+                            <a href="notifikasi.php" class="btn btn-primary btn-sm">
+                                <i class="fas fa-list me-1"></i>Lihat Semua Notifikasi
+                                <span class="badge bg-white text-dark ms-1"><?php echo count($notifications); ?></span>
+                            </a>
+                        </div>
+                    <?php else: ?>
+                        <div class="p-2 text-center bg-light">
+                            <a href="notifikasi.php" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-history me-1"></i>Lihat Riwayat Notifikasi
+                            </a>
+                        </div>
+                    <?php endif; ?>
+
+                <?php else: ?>
+                    <div class="p-4 text-center text-muted">
+                        <i class="fas fa-bell-slash fa-2x mb-3"></i>
+                        <p class="mb-0">Belum ada notifikasi</p>
+                        <small>Notifikasi akan muncul di sini</small>
                     </div>
-                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-    /// AJAX untuk notifikasi
-    function loadNotifications() {
-        $.ajax({
-            url: '../ajax/get_notifications.php',
-            type: 'GET',
-            success: function(response) {
-                $('#notifications-container').html(response);
-            },
-            error: function() {
-                $('#notifications-container').html('<div class="p-3 text-center text-muted"><i class="fas fa-exclamation-circle me-2"></i>Gagal memuat notifikasi.</div>');
-            }
-        });
-    }
-
-    // Muat notifikasi pertama kali
-    loadNotifications();
-
-    // Polling notifikasi setiap 3 detik
-    setInterval(loadNotifications, 3000);
-</script>
 
 <?php include '../components/footer.php'; ?>

@@ -28,7 +28,7 @@ foreach ($stok as $item) {
 // Hitung maksimal paket yang bisa diajukan (terbatas oleh stok)
 $max_paket = min(floor($stok_indomie / 1), floor($stok_kopi / 1));
 
-// Proses pengajuan fooding - MODIFIED FOR REDIRECT BACK
+// Proses pengajuan fooding
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['ajukan_fooding'])) {
     $jumlah = (int)$_POST['jumlah'];
 
@@ -64,6 +64,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['ajukan_fooding'])) {
             $stmt->bindParam(':jumlah', $jumlah);
             $stmt->execute();
 
+            // BUAT NOTIFIKASI OTOMATIS
+            $message = "Pengajuan fooding " . $jumlah . " paket berhasil diajukan. Status: Menunggu";
+            $notifQuery = "INSERT INTO notifications (user_id, message, status, timestamp) 
+                           VALUES (:user_id, :message, 'unread', NOW())";
+            $notifStmt = $db->prepare($notifQuery);
+            $notifStmt->bindParam(':user_id', $user_id);
+            $notifStmt->bindParam(':message', $message);
+            $notifStmt->execute();
+
             // Commit transaction
             $db->commit();
 
@@ -82,6 +91,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['ajukan_fooding'])) {
         }
     }
 }
+
+// Jika ada notifikasi dari redirect, tampilkan
+$error = isset($_SESSION['error_message']) ? $_SESSION['error_message'] : '';
+$success = isset($_SESSION['success_message']) ? $_SESSION['success_message'] : '';
+
+// Hapus notifikasi dari session setelah ditampilkan
+unset($_SESSION['error_message']);
+unset($_SESSION['success_message']);
 ?>
 
 <?php include '../components/header.php'; ?>
