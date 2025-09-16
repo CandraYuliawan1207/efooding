@@ -120,5 +120,5 @@ function formatDateTimeIndonesian($date)
 
     $timestamp = strtotime($date);
     return date('d', $timestamp) . ' ' . $months[date('n', $timestamp) - 1] . ' ' .
-        date('Y', $timestamp) . ' ' . date('H:i:s', $timestamp);
+        date('Y', $timestamp) . ' ' . date('H:i', $timestamp);
 }
