@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Asia/Jakarta');
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
@@ -6,7 +7,8 @@ if (session_status() == PHP_SESSION_NONE) {
 // Fungsi-fungsi lainnya...
 
 // Redirect jika belum login
-function requireLogin() {
+function requireLogin()
+{
     if (!isset($_SESSION['user_id'])) {
         header("Location: ../user/login.php");
         exit();
@@ -14,7 +16,8 @@ function requireLogin() {
 }
 
 // Redirect admin jika belum login
-function requireAdminLogin() {
+function requireAdminLogin()
+{
     if (!isset($_SESSION['admin_id'])) {
         header("Location: ../admin/login.php");
         exit();
@@ -22,12 +25,14 @@ function requireAdminLogin() {
 }
 
 // Cek apakah user sudah login
-function isLoggedIn() {
+function isLoggedIn()
+{
     return isset($_SESSION['user_id']);
 }
 
 // Cek apakah admin sudah login
-function isAdminLoggedIn() {
+function isAdminLoggedIn()
+{
     return isset($_SESSION['admin_id']);
 }
 
@@ -42,7 +47,8 @@ function isAdminLoggedIn() {
 // }
 
 // Set notifikasi
-function setNotification($message, $type = 'info') {
+function setNotification($message, $type = 'info')
+{
     $_SESSION['notification'] = [
         'message' => $message,
         'type' => $type
@@ -50,34 +56,45 @@ function setNotification($message, $type = 'info') {
 }
 
 // Tampilkan notifikasi
-function displayNotification() {
+function displayNotification()
+{
     if (isset($_SESSION['notification'])) {
         $notification = $_SESSION['notification'];
-        $alertClass = $notification['type'] == 'error' ? 'alert-danger' : 
-                     ($notification['type'] == 'success' ? 'alert-success' : 'alert-info');
-        
+        $alertClass = $notification['type'] == 'error' ? 'alert-danger' : ($notification['type'] == 'success' ? 'alert-success' : 'alert-info');
+
         echo '<div class="alert ' . $alertClass . ' alert-dismissible fade show" role="alert">
                 ' . $notification['message'] . '
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
               </div>';
-        
+
         unset($_SESSION['notification']);
     }
 }
 
 // Validasi input
-function sanitizeInput($data) {
+function sanitizeInput($data)
+{
     return htmlspecialchars(stripslashes(trim($data)));
 }
 
 // Format tanggal Indonesia
-function formatDateIndonesian($date) {
+function formatDateIndonesian($date)
+{
     $months = array(
-        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        'Januari',
+        'Februari',
+        'Maret',
+        'April',
+        'Mei',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'September',
+        'Oktober',
+        'November',
+        'Desember'
     );
-    
+
     $timestamp = strtotime($date);
     return date('d', $timestamp) . ' ' . $months[date('n', $timestamp) - 1] . ' ' . date('Y', $timestamp);
 }
-?>
