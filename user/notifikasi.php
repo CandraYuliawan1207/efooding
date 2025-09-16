@@ -210,7 +210,7 @@ foreach ($all_notifications as $notif) {
                                         <p class="mb-1"><?php echo htmlspecialchars($notif['message']); ?></p>
                                         <small class="text-muted">
                                             <i class="fas fa-clock me-1"></i>
-                                            <?php echo date('d M Y H:i', strtotime($notif['timestamp'])); ?>
+                                            <?php echo formatDateTimeIndonesian($notif['timestamp']); ?>
                                         </small>
                                     </div>
                                     <div class="flex-shrink-0 ms-3">

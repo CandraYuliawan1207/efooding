@@ -95,6 +95,30 @@ function formatDateIndonesian($date)
         'Desember'
     );
 
+    // Convert timezone jika perlu
     $timestamp = strtotime($date);
     return date('d', $timestamp) . ' ' . $months[date('n', $timestamp) - 1] . ' ' . date('Y', $timestamp);
+}
+
+// Fungsi baru untuk datetime lengkap
+function formatDateTimeIndonesian($date)
+{
+    $months = array(
+        'Januari',
+        'Februari',
+        'Maret',
+        'April',
+        'Mei',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'September',
+        'Oktober',
+        'November',
+        'Desember'
+    );
+
+    $timestamp = strtotime($date);
+    return date('d', $timestamp) . ' ' . $months[date('n', $timestamp) - 1] . ' ' .
+        date('Y', $timestamp) . ' ' . date('H:i:s', $timestamp);
 }

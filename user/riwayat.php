@@ -58,7 +58,7 @@ $status_colors = [];
 foreach ($stats as $stat) {
     $status_labels[] = $stat['status'];
     $status_data[] = $stat['jumlah'];
-    
+
     // Tentukan warna berdasarkan status
     switch ($stat['status']) {
         case 'Disetujui':
@@ -90,7 +90,7 @@ foreach ($stats as $stat) {
                 </button>
             </div>
         </div>
-        
+
         <!-- Filter Form -->
         <div class="card mb-4 d-none" id="filterForm">
             <div class="card-body">
@@ -123,15 +123,13 @@ foreach ($stats as $stat) {
                 </form>
             </div>
         </div>
-        
+
         <!-- Statistik Ringkas -->
         <div class="row mb-4">
             <?php foreach ($stats as $stat): ?>
                 <div class="col-md-3 mb-3">
                     <div class="card stat-card 
-                        <?php echo $stat['status'] == 'Disetujui' ? 'bg-success' : 
-                              ($stat['status'] == 'Menunggu' ? 'bg-warning' : 
-                              ($stat['status'] == 'Diperiksa' ? 'bg-info' : 'bg-danger')); ?> 
+                        <?php echo $stat['status'] == 'Disetujui' ? 'bg-success' : ($stat['status'] == 'Menunggu' ? 'bg-warning' : ($stat['status'] == 'Diperiksa' ? 'bg-info' : 'bg-danger')); ?> 
                         text-white text-center">
                         <div class="card-body">
                             <h5 class="card-title"><?php echo $stat['status']; ?></h5>
@@ -142,35 +140,35 @@ foreach ($stats as $stat) {
                 </div>
             <?php endforeach; ?>
         </div>
-        
+
         <!-- Grafik Distribusi Status -->
         <?php if (!empty($stats)): ?>
-        <div class="card mb-4 smooth-hover">
-            <div class="card-header bg-white">
-                <h5 class="card-title mb-0"><i class="fas fa-chart-pie me-2"></i>Distribusi Status Pengajuan</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <canvas id="statusChart" height="250"></canvas>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mt-4">
-                            <?php foreach ($stats as $index => $stat): ?>
-                                <div class="d-flex align-items-center mb-2">
-                                    <div class="color-badge me-2" 
-                                         style="background-color: <?php echo $status_colors[$index]; ?>; width: 20px; height: 20px; border-radius: 4px;"></div>
-                                    <span class="me-2"><?php echo $stat['status']; ?>:</span>
-                                    <strong><?php echo $stat['jumlah']; ?> pengajuan</strong>
-                                </div>
-                            <?php endforeach; ?>
+            <div class="card mb-4 smooth-hover">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-chart-pie me-2"></i>Distribusi Status Pengajuan</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <canvas id="statusChart" height="250"></canvas>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mt-4">
+                                <?php foreach ($stats as $index => $stat): ?>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="color-badge me-2"
+                                            style="background-color: <?php echo $status_colors[$index]; ?>; width: 20px; height: 20px; border-radius: 4px;"></div>
+                                        <span class="me-2"><?php echo $stat['status']; ?>:</span>
+                                        <strong><?php echo $stat['jumlah']; ?> pengajuan</strong>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
         <?php endif; ?>
-        
+
         <!-- Tabel Riwayat -->
         <div class="card smooth-hover">
             <div class="card-header bg-white">
@@ -191,10 +189,12 @@ foreach ($stats as $stat) {
                             <tbody>
                                 <?php foreach ($riwayat as $r): ?>
                                     <tr>
-                                        <td><?php echo date('d M Y H:i', strtotime($r['tanggal'])); ?></td>
+                                        <td>
+                                            <?php echo formatDateTimeIndonesian($r['tanggal']); ?>
+                                        </td>
                                         <td><?php echo $r['jumlah']; ?> paket</td>
                                         <td>
-                                            <?php 
+                                            <?php
                                             $badge_class = '';
                                             switch ($r['status']) {
                                                 case 'Menunggu':
@@ -242,40 +242,40 @@ foreach ($stats as $stat) {
 </div>
 
 <script>
-// Toggle filter form
-document.getElementById('filterToggle').addEventListener('click', function() {
-    document.getElementById('filterForm').classList.toggle('d-none');
-});
+    // Toggle filter form
+    document.getElementById('filterToggle').addEventListener('click', function() {
+        document.getElementById('filterForm').classList.toggle('d-none');
+    });
 
-// Grafik Pie Status
-<?php if (!empty($stats)): ?>
-document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('statusChart').getContext('2d');
-    const statusChart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: <?php echo json_encode($status_labels); ?>,
-            datasets: [{
-                data: <?php echo json_encode($status_data); ?>,
-                backgroundColor: <?php echo json_encode($status_colors); ?>,
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        boxWidth: 15,
-                        padding: 15
+    // Grafik Pie Status
+    <?php if (!empty($stats)): ?>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            const statusChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: <?php echo json_encode($status_labels); ?>,
+                    datasets: [{
+                        data: <?php echo json_encode($status_data); ?>,
+                        backgroundColor: <?php echo json_encode($status_colors); ?>,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 15,
+                                padding: 15
+                            }
+                        }
                     }
                 }
-            }
-        }
-    });
-});
-<?php endif; ?>
+            });
+        });
+    <?php endif; ?>
 </script>
 
 <?php include '../components/footer.php'; ?>

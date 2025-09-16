@@ -346,8 +346,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
                                         <?php foreach ($pengajuan as $p): ?>
                                             <tr>
                                                 <td>
-                                                    <div><?php echo date('d M Y', strtotime($p['tanggal'])); ?></div>
-                                                    <small class="text-muted"><?php echo date('H:i', strtotime($p['tanggal'])); ?></small>
+                                                    <div><?php echo formatDateIndonesian($p['tanggal']); ?></div>
+                                                    <small class="text-muted">
+                                                        <?php
+                                                        // Tampilkan jam saja untuk detail
+                                                        $timestamp = strtotime($p['tanggal']);
+                                                        echo date('H:i', $timestamp);
+                                                        ?>
+                                                    </small>
                                                 </td>
                                                 <td><?php echo htmlspecialchars($p['username']); ?></td>
                                                 <td><?php echo htmlspecialchars($p['department']); ?></td>

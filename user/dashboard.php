@@ -261,7 +261,10 @@ foreach ($notifications as $notif) {
                                     <?php endif; ?>
                                     <p class="mb-1"><?php echo htmlspecialchars($notif['message']); ?></p>
                                     <small class="text-muted">
-                                        <?php echo date('d M Y H:i', strtotime($notif['timestamp'])); ?>
+                                        <?php
+                                        // Gunakan fungsi formatDateTimeIndonesian yang sudah dibuat
+                                        echo formatDateTimeIndonesian($notif['timestamp']);
+                                        ?>
                                     </small>
                                 </div>
                                 <div class="flex-shrink-0 ms-2">
