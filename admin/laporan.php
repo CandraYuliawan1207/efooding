@@ -8,7 +8,8 @@ $database = new Database();
 $db = $database->getConnection();
 
 // Inisialisasi variabel filter
-$filter_bulan = isset($_GET['bulan']) ? $_GET['bulan'] : date('Y-m');
+$start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01');
+$end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
 $filter_status = isset($_GET['status']) ? $_GET['status'] : '';
 $filter_department = isset($_GET['department']) ? $_GET['department'] : '';
 
@@ -20,10 +21,11 @@ $query = "SELECT fr.*, u.username, u.department
 
 $params = [];
 
-// Filter bulan
-if (!empty($filter_bulan)) {
-    $query .= " AND DATE_FORMAT(fr.tanggal, '%Y-%m') = :bulan";
-    $params[':bulan'] = $filter_bulan;
+// Filter range tanggal
+if (!empty($start_date) && !empty($end_date)) {
+    $query .= " AND DATE(fr.tanggal) BETWEEN :start_date AND :end_date";
+    $params[':start_date'] = $start_date;
+    $params[':end_date'] = $end_date;
 }
 
 // Filter status
@@ -69,9 +71,9 @@ $departments = $deptStmt->fetchAll(PDO::FETCH_COLUMN);
 // Export to Excel
 if (isset($_GET['export']) && $_GET['export'] == 'excel') {
     header('Content-Type: application/vnd.ms-excel');
-    header('Content-Disposition: attachment; filename="laporan_fooding_' . $filter_bulan . '.xls"');
+    header('Content-Disposition: attachment; filename="laporan_fooding_' . $start_date . '_to_' . $end_date . '.xls"');
 
-    echo "Laporan Fooding - " . date('F Y', strtotime($filter_bulan)) . "\n\n";
+    echo "Laporan Fooding - " . date('d/m/Y', strtotime($start_date)) . " sampai " . date('d/m/Y', strtotime($end_date)) . "\n\n";
     echo "Tanggal\tUser\tDepartment\tJumlah Paket\tStatus\n";
 
     foreach ($laporan as $row) {
@@ -92,7 +94,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2 class="mb-1">Laporan Fooding</h2>
+                    <h2 class="mb-1">Laporan Extra Fooding</h2>
                     <p class="text-muted mb-0">Analisis dan statistik pengajuan fooding</p>
                 </div>
                 <div>
@@ -111,12 +113,17 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
                 </div>
                 <div class="card-body">
                     <form method="GET" class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label">Bulan</label>
-                            <input type="month" class="form-control" name="bulan"
-                                value="<?php echo $filter_bulan; ?>" max="<?php echo date('Y-m'); ?>">
+                        <div class="col-md-2">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-control" name="start_date"
+                                value="<?php echo $start_date; ?>" max="<?php echo date('Y-m-d'); ?>">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
+                            <label class="form-label">To Date</label>
+                            <input type="date" class="form-control" name="end_date"
+                                value="<?php echo $end_date; ?>" max="<?php echo date('Y-m-d'); ?>">
+                        </div>
+                        <div class="col-md-2">
                             <label class="form-label">Status</label>
                             <select class="form-select" name="status">
                                 <option value="all">Semua Status</option>
@@ -149,6 +156,18 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
                             </div>
                         </div>
                     </form>
+
+                    <!-- Info Periode -->
+                    <?php if (!empty($start_date) && !empty($end_date)): ?>
+                        <div class="mt-3 p-2 bg-light rounded">
+                            <small class="text-muted">
+                                <strong>Periode:</strong>
+                                <?php echo date('d M Y', strtotime($start_date)); ?> -
+                                <?php echo date('d M Y', strtotime($end_date)); ?>
+                                (<?php echo count($laporan); ?> data ditemukan)
+                            </small>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -185,8 +204,10 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
                     <div class="card bg-warning text-dark text-center">
                         <div class="card-body py-3">
                             <h6 class="card-title">Periode</h6>
-                            <h4 class="mb-0"><?php echo date('M Y', strtotime($filter_bulan)); ?></h4>
-                            <small>Bulan laporan</small>
+                            <h4 class="mb-0">
+                                <?php echo date('d M', strtotime($start_date)); ?><br>
+                                <small>s/d <?php echo date('d M Y', strtotime($end_date)); ?></small>
+                            </h4>
                         </div>
                     </div>
                 </div>
@@ -218,6 +239,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
                         <h5 class="card-title mb-0">Detail Laporan</h5>
                         <small class="text-muted">
                             Menampilkan <?php echo number_format(count($laporan)); ?> data
+                            (<?php echo date('d M Y', strtotime($start_date)); ?> - <?php echo date('d M Y', strtotime($end_date)); ?>)
                         </small>
                     </div>
                 </div>
