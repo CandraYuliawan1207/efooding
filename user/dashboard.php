@@ -188,6 +188,9 @@ foreach ($notifications as $notif) {
                                                 case 'Disetujui':
                                                     $badge_class = 'bg-success';
                                                     break;
+                                                case 'Disetujui Sebagian':
+                                                    $badge_class = 'bg-warning';
+                                                    break;
                                                 case 'Ditolak':
                                                     $badge_class = 'bg-danger';
                                                     break;

@@ -130,6 +130,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
                                 <option value="Menunggu" <?php echo $filter_status == 'Menunggu' ? 'selected' : ''; ?>>Menunggu</option>
                                 <option value="Diperiksa" <?php echo $filter_status == 'Diperiksa' ? 'selected' : ''; ?>>Diperiksa</option>
                                 <option value="Disetujui" <?php echo $filter_status == 'Disetujui' ? 'selected' : ''; ?>>Disetujui</option>
+                                <option value="Disetujui Sebagian" <?php echo $filter_status == 'Disetujui Sebagian' ? 'selected' : ''; ?>>Disetujui Sebagian</option>
                                 <option value="Ditolak" <?php echo $filter_status == 'Ditolak' ? 'selected' : ''; ?>>Ditolak</option>
                             </select>
                         </div>
@@ -284,6 +285,9 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
                                                     case 'Disetujui':
                                                         $badge_class = 'bg-success';
                                                         break;
+                                                    case 'Disetujui Sebagian':
+                                                        $badge_class = 'bg-warning';
+                                                        break;
                                                     case 'Ditolak':
                                                         $badge_class = 'bg-danger';
                                                         break;
@@ -324,6 +328,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
             'Menunggu': <?php echo count(array_filter($laporan, fn($item) => $item['status'] === 'Menunggu')); ?>,
             'Diperiksa': <?php echo count(array_filter($laporan, fn($item) => $item['status'] === 'Diperiksa')); ?>,
             'Disetujui': <?php echo count(array_filter($laporan, fn($item) => $item['status'] === 'Disetujui')); ?>,
+            'Disetujui Sebagian': <?php echo count(array_filter($laporan, fn($item) => $item['status'] === 'Disetujui Sebagian')); ?>,
             'Ditolak': <?php echo count(array_filter($laporan, fn($item) => $item['status'] === 'Ditolak')); ?>
         };
 
@@ -350,7 +355,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
                 labels: Object.keys(statusData),
                 datasets: [{
                     data: Object.values(statusData),
-                    backgroundColor: ['#ffc107', '#17a2b8', '#28a745', '#dc3545']
+                    backgroundColor: ['#ffc107', '#17a2b8', '#28a745','#fd7e14', '#dc3545']
                 }]
             },
             options: {

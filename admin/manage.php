@@ -12,8 +12,8 @@ $filter_status = isset($_GET['status']) ? $_GET['status'] : '';
 $filter_dari = isset($_GET['dari_tanggal']) ? $_GET['dari_tanggal'] : '';
 $filter_sampai = isset($_GET['sampai_tanggal']) ? $_GET['sampai_tanggal'] : '';
 
-// Build query dengan filter - MENGGUNAKAN tanggal BUKAN created_at
-$query = "SELECT fr.*, u.username, u.department 
+// Build query dengan filter
+$query = "SELECT fr.*, u.username, u.department, fr.jumlah_disetujui
           FROM fooding_requests fr 
           JOIN users u ON fr.user_id = u.id 
           WHERE 1=1";
@@ -26,19 +26,19 @@ if (!empty($filter_status)) {
     $params[':status'] = $filter_status;
 }
 
-// Filter tanggal dari - MENGGUNAKAN tanggal BUKAN created_at
+// Filter tanggal dari
 if (!empty($filter_dari)) {
     $query .= " AND DATE(fr.tanggal) >= :dari_tanggal";
     $params[':dari_tanggal'] = $filter_dari;
 }
 
-// Filter tanggal sampai - MENGGUNAKAN tanggal BUKAN created_at
+// Filter tanggal sampai
 if (!empty($filter_sampai)) {
     $query .= " AND DATE(fr.tanggal) <= :sampai_tanggal";
     $params[':sampai_tanggal'] = $filter_sampai;
 }
 
-$query .= " ORDER BY fr.tanggal DESC"; // MENGGUNAKAN tanggal BUKAN created_at
+$query .= " ORDER BY fr.tanggal DESC";
 
 // Prepare dan execute query dengan filter
 $stmt = $db->prepare($query);
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     break;
                 case 'Disetujui':
                     $message = "Pengajuan fooding " . $jumlah . " paket telah disetujui. Silahkan ambil ke Waserda";
-
+                    
                     // Kurangi stok jika disetujui
                     $query = "UPDATE stock SET quantity = quantity - :jumlah WHERE item_name = 'Indomie'";
                     $stmt = $db->prepare($query);
@@ -96,6 +96,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     break;
                 case 'Ditolak':
                     $message = "Pengajuan fooding " . $jumlah . " paket ditolak. Hubungi admin untuk informasi lebih lanjut";
+                    break;
+                case 'Disetujui Sebagian':
+                    $message = "Pengajuan fooding Anda telah diproses. Sebagian paket disetujui.";
                     break;
                 default:
                     $message = "Status pengajuan fooding diubah menjadi: " . $new_status;
@@ -128,24 +131,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             setNotification('Gagal memperbarui status: ' . $e->getMessage(), 'error');
         }
     }
-
+    
     // Proses update status individual penerima
     if (isset($_POST['update_recipient_status'])) {
         $recipient_id = $_POST['recipient_id'];
         $request_id = $_POST['request_id'];
         $status = $_POST['recipient_status'];
-
+        
         try {
             // Mulai transaction
             $db->beginTransaction();
-
+            
             // 1. Update status penerima individual
             $query = "UPDATE fooding_recipients SET status = :status WHERE id = :id";
             $stmt = $db->prepare($query);
             $stmt->bindParam(':status', $status);
             $stmt->bindParam(':id', $recipient_id);
             $stmt->execute();
-
+            
             // 2. Hitung jumlah penerima yang disetujui dan ditolak
             $query = "SELECT 
                         COUNT(CASE WHEN status = 'Disetujui' THEN 1 END) as disetujui,
@@ -156,25 +159,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->bindParam(':request_id', $request_id);
             $stmt->execute();
             $status_count = $stmt->fetch(PDO::FETCH_ASSOC);
-
+            
             $disetujui = $status_count['disetujui'];
             $ditolak = $status_count['ditolak'];
             $menunggu = $status_count['menunggu'];
-
+            
             // 3. Update status pengajuan berdasarkan status penerima
             $new_request_status = 'Diperiksa';
             $jumlah_disetujui = $disetujui;
-
+            
             if ($menunggu == 0) {
                 // Semua penerima sudah diproses
                 if ($ditolak == 0) {
-                    $new_request_status = 'Disetujui';
+                    $new_request_status = 'Disetujui'; // Semua disetujui
                 } elseif ($disetujui == 0) {
-                    $new_request_status = 'Ditolak';
+                    $new_request_status = 'Ditolak'; // Semua ditolak
                 } else {
-                    $new_request_status = 'Disetujui Sebagian';
+                    $new_request_status = 'Disetujui Sebagian'; // Campuran
                 }
-
+                
                 // Update jumlah yang disetujui di fooding_requests
                 $query = "UPDATE fooding_requests SET status = :status, jumlah_disetujui = :jumlah_disetujui WHERE id = :id";
                 $stmt = $db->prepare($query);
@@ -182,7 +185,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $stmt->bindParam(':jumlah_disetujui', $jumlah_disetujui);
                 $stmt->bindParam(':id', $request_id);
                 $stmt->execute();
-
+                
                 // Kurangi stok jika ada yang disetujui
                 if ($disetujui > 0) {
                     $query = "UPDATE stock SET quantity = quantity - :jumlah WHERE item_name = 'Indomie'";
@@ -195,7 +198,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $stmt->bindParam(':jumlah', $disetujui);
                     $stmt->execute();
                 }
-
+                
                 // Buat notifikasi untuk user
                 $query = "SELECT user_id, jumlah FROM fooding_requests WHERE id = :id";
                 $stmt = $db->prepare($query);
@@ -204,16 +207,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $pengajuan_data = $stmt->fetch(PDO::FETCH_ASSOC);
                 $user_id = $pengajuan_data['user_id'];
                 $jumlah = $pengajuan_data['jumlah'];
-
+                
                 $message = "Pengajuan fooding Anda telah diproses. ";
                 if ($new_request_status == 'Disetujui') {
-                    $message .= "Semua $jumlah paket disetujui.";
+                    $message .= "Semua $jumlah paket disetujui. Silakan ambil di Waserda.";
                 } elseif ($new_request_status == 'Ditolak') {
-                    $message .= "Semua $jumlah paket ditolak.";
+                    $message .= "Semua $jumlah paket ditolak. Hubungi admin untuk informasi lebih lanjut.";
                 } else {
-                    $message .= "$disetujui dari $jumlah paket disetujui.";
+                    $message .= "$disetujui dari $jumlah paket disetujui. Silakan ambil di Waserda.";
                 }
-
+                
                 $notifQuery = "INSERT INTO notifications (user_id, message, status, timestamp) 
                                VALUES (:user_id, :message, 'unread', NOW())";
                 $notifStmt = $db->prepare($notifQuery);
@@ -228,10 +231,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $stmt->bindParam(':id', $request_id);
                 $stmt->execute();
             }
-
+            
             // Commit transaction
             $db->commit();
-
+            
             setNotification('Status penerima berhasil diperbarui', 'success');
             header("Location: manage.php?view=" . $request_id);
             exit();
@@ -248,6 +251,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 // Ambil detail penerima jika parameter view ada
 $recipients = [];
 $pengajuan_detail = [];
+$stats = [
+    'disetujui' => 0,
+    'ditolak' => 0,
+    'menunggu' => 0,
+    'total' => 0
+];
+
 if (isset($_GET['view'])) {
     $request_id = $_GET['view'];
     $query = "SELECT * FROM fooding_recipients WHERE request_id = :request_id ORDER BY name";
@@ -255,7 +265,7 @@ if (isset($_GET['view'])) {
     $stmt->bindParam(':request_id', $request_id);
     $stmt->execute();
     $recipients = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+    
     // Ambil info pengajuan
     $query = "SELECT fr.*, u.username, u.department 
               FROM fooding_requests fr 
@@ -265,21 +275,24 @@ if (isset($_GET['view'])) {
     $stmt->bindParam(':request_id', $request_id);
     $stmt->execute();
     $pengajuan_detail = $stmt->fetch(PDO::FETCH_ASSOC);
-
+    
     // Hitung statistik penerima
-    $stats = [
-        'disetujui' => 0,
-        'ditolak' => 0,
-        'menunggu' => 0,
-        'total' => count($recipients)
-    ];
-
+    $stats['total'] = count($recipients);
+    
     foreach ($recipients as $recipient) {
         if ($recipient['status'] == 'Disetujui') $stats['disetujui']++;
         if ($recipient['status'] == 'Ditolak') $stats['ditolak']++;
         if ($recipient['status'] == 'Menunggu') $stats['menunggu']++;
     }
 }
+
+// Jika ada notifikasi dari redirect, tampilkan
+$error = isset($_SESSION['error_message']) ? $_SESSION['error_message'] : '';
+$success = isset($_SESSION['success_message']) ? $_SESSION['success_message'] : '';
+
+// Hapus notifikasi dari session setelah ditampilkan
+unset($_SESSION['error_message']);
+unset($_SESSION['success_message']);
 ?>
 
 <!DOCTYPE html>
@@ -314,36 +327,16 @@ if (isset($_GET['view'])) {
             font-weight: 600;
             color: #495057;
         }
-
-        .badge-menunggu {
-            background-color: #ffc107;
-            color: #000;
-        }
-
-        .badge-diperiksa {
-            background-color: #0dcaf0;
-            color: #000;
-        }
-
-        .badge-disetujui {
-            background-color: #198754;
-            color: #fff;
-        }
-
-        .badge-ditolak {
-            background-color: #dc3545;
-            color: #fff;
-        }
-
-        .badge-disetujui-sebagian {
-            background-color: #fd7e14;
-            color: #fff;
-        }
-
+        
+        .badge-menunggu { background-color: #ffc107; color: #000; }
+        .badge-diperiksa { background-color: #0dcaf0; color: #000; }
+        .badge-disetujui { background-color: #198754; }
+        .badge-ditolak { background-color: #dc3545; }
+        .badge-disetujui-sebagian { background-color: #fd7e14; }
+        
         .stat-card {
             transition: transform 0.2s;
         }
-
         .stat-card:hover {
             transform: translateY(-5px);
         }
@@ -356,6 +349,20 @@ if (isset($_GET['view'])) {
     <div class="container-fluid py-4">
         <div class="row">
             <div class="col-12">
+                <!-- Notifikasi -->
+                <?php if ($success): ?>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <?php echo $success; ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <?php endif; ?>
+                <?php if ($error): ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <?php echo $error; ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <?php endif; ?>
+
                 <?php if (isset($_GET['view'])): ?>
                     <!-- Detail View untuk Melihat Penerima -->
                     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -369,7 +376,7 @@ if (isset($_GET['view'])) {
                             </a>
                         </div>
                     </div>
-
+                    
                     <!-- Statistik Penerima -->
                     <div class="row mb-4">
                         <div class="col-md-3">
@@ -405,7 +412,7 @@ if (isset($_GET['view'])) {
                             </div>
                         </div>
                     </div>
-
+                    
                     <!-- Info Pengajuan -->
                     <div class="card mb-4">
                         <div class="card-header bg-light">
@@ -423,8 +430,8 @@ if (isset($_GET['view'])) {
                                     <strong>Jumlah Diajukan:</strong> <?php echo $pengajuan_detail['jumlah']; ?> paket
                                 </div>
                                 <div class="col-md-3">
-                                    <strong>Jumlah Disetujui:</strong>
-                                    <?php if (isset($pengajuan_detail['jumlah_disetujui'])): ?>
+                                    <strong>Jumlah Disetujui:</strong> 
+                                    <?php if (isset($pengajuan_detail['jumlah_disetujui']) && $pengajuan_detail['jumlah_disetujui'] !== null): ?>
                                         <?php echo $pengajuan_detail['jumlah_disetujui']; ?> paket
                                     <?php else: ?>
                                         <span class="text-muted">Belum diproses</span>
@@ -433,30 +440,8 @@ if (isset($_GET['view'])) {
                             </div>
                             <div class="row mt-3">
                                 <div class="col-md-6">
-                                    <strong>Status Pengajuan:</strong>
-                                    <?php
-                                    $statusClass = '';
-                                    switch ($pengajuan_detail['status']) {
-                                        case 'Menunggu':
-                                            $statusClass = 'badge-menunggu';
-                                            break;
-                                        case 'Diperiksa':
-                                            $statusClass = 'badge-diperiksa';
-                                            break;
-                                        case 'Disetujui':
-                                            $statusClass = 'badge-disetujui';
-                                            break;
-                                        case 'Ditolak':
-                                            $statusClass = 'badge-ditolak';
-                                            break;
-                                        case 'Disetujui Sebagian':
-                                            $statusClass = 'badge-disetujui-sebagian';
-                                            break;
-                                        default:
-                                            $statusClass = 'badge-secondary';
-                                    }
-                                    ?>
-                                    <span class="badge <?php echo $statusClass; ?>">
+                                    <strong>Status Pengajuan:</strong> 
+                                    <span class="badge badge-<?php echo strtolower(str_replace(' ', '-', $pengajuan_detail['status'])); ?>">
                                         <?php echo $pengajuan_detail['status']; ?>
                                     </span>
                                 </div>
@@ -466,7 +451,7 @@ if (isset($_GET['view'])) {
                             </div>
                         </div>
                     </div>
-
+                    
                     <!-- Daftar Penerima -->
                     <div class="card">
                         <div class="card-header bg-white">
@@ -478,84 +463,76 @@ if (isset($_GET['view'])) {
                             </div>
                         </div>
                         <div class="card-body">
-                            <?php if (count($recipients) > 0): ?>
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>No</th>
-                                                <th>Nama Penerima</th>
-                                                <th>Status</th>
-                                                <th>Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php foreach ($recipients as $index => $recipient): ?>
-                                                <tr>
-                                                    <td><?php echo $index + 1; ?></td>
-                                                    <td><?php echo htmlspecialchars($recipient['name']); ?></td>
-                                                    <td>
-                                                        <?php
-                                                        $recipientStatusClass = '';
-                                                        switch ($recipient['status']) {
-                                                            case 'Menunggu':
-                                                                $recipientStatusClass = 'badge-menunggu';
-                                                                break;
-                                                            case 'Disetujui':
-                                                                $recipientStatusClass = 'badge-disetujui';
-                                                                break;
-                                                            case 'Ditolak':
-                                                                $recipientStatusClass = 'badge-ditolak';
-                                                                break;
-                                                            default:
-                                                                $recipientStatusClass = 'badge-secondary';
-                                                        }
-                                                        ?>
-                                                        <span class="badge <?php echo $recipientStatusClass; ?>">
-                                                            <?php echo $recipient['status']; ?>
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <form method="POST" class="d-inline">
-                                                            <input type="hidden" name="recipient_id" value="<?php echo $recipient['id']; ?>">
-                                                            <input type="hidden" name="request_id" value="<?php echo $request_id; ?>">
-                                                            <input type="hidden" name="recipient_status" value="">
-                                                            <div class="btn-group">
-                                                                <button type="button" onclick="setRecipientStatus(this, 'Disetujui')"
-                                                                    class="btn btn-sm <?php echo $recipient['status'] == 'Disetujui' ? 'btn-success' : 'btn-outline-success'; ?>">
-                                                                    <i class="fas fa-check me-1"></i>Setujui
-                                                                </button>
-                                                                <button type="button" onclick="setRecipientStatus(this, 'Ditolak')"
-                                                                    class="btn btn-sm <?php echo $recipient['status'] == 'Ditolak' ? 'btn-danger' : 'btn-outline-danger'; ?>">
-                                                                    <i class="fas fa-times me-1"></i>Tolak
-                                                                </button>
-                                                            </div>
-                                                        </form>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                                <!-- Info Penting -->
-                                <div class="alert alert-info mt-3">
-                                    <h6><i class="fas fa-info-circle me-2"></i>Informasi Penting</h6>
-                                    <ul class="mb-0">
-                                        <li>Stok akan otomatis berkurang sesuai jumlah penerima yang disetujui</li>
-                                        <li>Status pengajuan akan berubah otomatis setelah semua penerima diproses</li>
-                                        <li>User akan menerima notifikasi tentang hasil pengajuan</li>
-                                    </ul>
-                                </div>
-                            <?php else: ?>
-                                <div class="text-center py-5">
-                                    <i class="fas fa-users fa-4x text-muted mb-3"></i>
-                                    <p class="text-muted">Tidak ada data penerima untuk pengajuan ini.</p>
-                                </div>
-                            <?php endif; ?>
+                        <?php if (count($recipients) > 0): ?>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>No</th>
+                    <th>Nama Penerima</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($recipients as $index => $recipient): ?>
+                    <tr>
+                        <td><?php echo $index + 1; ?></td>
+                        <td><?php echo htmlspecialchars($recipient['name']); ?></td>
+                        <td>
+                            <span class="badge badge-<?php echo strtolower($recipient['status']); ?>">
+                                <?php echo $recipient['status']; ?>
+                            </span>
+                        </td>
+                        <td>
+                            <!-- FORM UNTUK SETUJUI -->
+                            <form method="POST" class="d-inline-block">
+                                <input type="hidden" name="recipient_id" value="<?php echo $recipient['id']; ?>">
+                                <input type="hidden" name="request_id" value="<?php echo $request_id; ?>">
+                                <input type="hidden" name="recipient_status" value="Disetujui">
+                                <button type="submit" name="update_recipient_status" 
+                                        class="btn btn-sm <?php echo $recipient['status'] == 'Disetujui' ? 'btn-success' : 'btn-outline-success'; ?>">
+                                    <i class="fas fa-check me-1"></i>Setujui
+                                </button>
+                            </form>
+                            
+                            <!-- FORM UNTUK TOLAK -->
+                            <form method="POST" class="d-inline-block ms-1">
+                                <input type="hidden" name="recipient_id" value="<?php echo $recipient['id']; ?>">
+                                <input type="hidden" name="request_id" value="<?php echo $request_id; ?>">
+                                <input type="hidden" name="recipient_status" value="Ditolak">
+                                <button type="submit" name="update_recipient_status" 
+                                        class="btn btn-sm <?php echo $recipient['status'] == 'Ditolak' ? 'btn-danger' : 'btn-outline-danger'; ?>">
+                                    <i class="fas fa-times me-1"></i>Tolak
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+                                
+                                <!-- Info Status Proses -->
+    <div class="alert alert-info mt-3">
+        <h6><i class="fas fa-info-circle me-2"></i>Cara Kerja Sistem</h6>
+        <ul class="mb-0">
+            <li>Klik <strong>Setujui</strong> atau <strong>Tolak</strong> untuk setiap penerima</li>
+            <li>Status akan langsung berubah dan tombol akan ter-highlight</li>
+            <li>Stok akan otomatis berkurang sesuai jumlah yang disetujui</li>
+            <li>Setelah semua penerima diproses, status pengajuan akan otomatis berubah</li>
+            <li>User akan menerima notifikasi tentang hasil pengajuan</li>
+        </ul>
+    </div>
+<?php else: ?>
+    <div class="text-center py-5">
+        <i class="fas fa-users fa-4x text-muted mb-3"></i>
+        <p class="text-muted">Tidak ada data penerima untuk pengajuan ini.</p>
+    </div>
+<?php endif; ?>
                         </div>
                     </div>
-
+                    
                 <?php else: ?>
                     <!-- List View untuk Semua Pengajuan -->
                     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -588,272 +565,281 @@ if (isset($_GET['view'])) {
                                         <option value="Diperiksa" <?php echo $filter_status == 'Diperiksa' ? 'selected' : ''; ?>>Diperiksa</option>
                                         <option value="Disetujui" <?php echo $filter_status == 'Disetujui' ? 'selected' : ''; ?>>Disetujui</option>
                                         <option value="Ditolak" <?php echo $filter_status == 'Ditolak' ? 'selected' : ''; ?>>Ditolak</option>
+                                        <option value="Disetujui Sebagian" <?php echo $filter_status == 'Disetujui Sebagian' ? 'selected' : ''; ?>>Disetujui Sebagian</option>
                                     </select>
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label">Tanggal Dari</label>
-                                    <input type="date" class="form-control" name="dari_tanggal"
-                                        value="<?php echo $filter_dari; ?>">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Tanggal Sampai</label>
-                                    <input type="date" class="form-control" name="sampai_tanggal"
-                                        value="<?php echo $filter_sampai; ?>">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">&nbsp;</label>
-                                    <div class="d-flex gap-2">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-check me-1"></i>Terapkan
-                                        </button>
-                                        <a href="manage.php" class="btn btn-secondary">
-                                            <i class="fas fa-times me-1"></i>Reset
-                                        </a>
-                                    </div>
-                                </div>
-                            </form>
+    <label class="form-label">Tanggal Dari</label>
+    <input type="date" class="form-control" name="dari_tanggal" value="<?php echo $filter_dari; ?>">
+</div>
 
-                            <!-- Info Filter Aktif -->
-                            <?php if (!empty($filter_status) || !empty($filter_dari) || !empty($filter_sampai)): ?>
-                                <div class="mt-3 p-2 bg-light rounded">
-                                    <small class="text-muted">
-                                        <strong>Filter Aktif:</strong>
-                                        <?php
-                                        $active_filters = [];
-                                        if (!empty($filter_status)) $active_filters[] = "Status: $filter_status";
-                                        if (!empty($filter_dari)) $active_filters[] = "Dari: " . date('d M Y', strtotime($filter_dari));
-                                        if (!empty($filter_sampai)) $active_filters[] = "Sampai: " . date('d M Y', strtotime($filter_sampai));
-                                        echo implode(', ', $active_filters);
-                                        ?>
-                                    </small>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
+<div class="col-md-3">
+    <label class="form-label">Tanggal Sampai</label>
+    <input type="date" class="form-control" name="sampai_tanggal" value="<?php echo $filter_sampai; ?>">
+</div>
 
-                    <!-- Statistik Cepat -->
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <div class="card bg-primary text-white text-center">
-                                <div class="card-body py-3">
-                                    <h6 class="card-title">Total Pengajuan</h6>
-                                    <h4 class="mb-0"><?php echo count($pengajuan); ?></h4>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-warning text-dark text-center">
-                                <div class="card-body py-3">
-                                    <h6 class="card-title">Menunggu</h6>
-                                    <h4 class="mb-0">
-                                        <?php echo count(array_filter($pengajuan, function ($p) {
-                                            return $p['status'] == 'Menunggu';
-                                        })); ?>
-                                    </h4>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-info text-white text-center">
-                                <div class="card-body py-3">
-                                    <h6 class="card-title">Diperiksa</h6>
-                                    <h4 class="mb-0">
-                                        <?php echo count(array_filter($pengajuan, function ($p) {
-                                            return $p['status'] == 'Diperiksa';
-                                        })); ?>
-                                    </h4>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-success text-white text-center">
-                                <div class="card-body py-3">
-                                    <h6 class="card-title">Disetujui</h6>
-                                    <h4 class="mb-0">
-                                        <?php echo count(array_filter($pengajuan, function ($p) {
-                                            return $p['status'] == 'Disetujui';
-                                        })); ?>
-                                    </h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+<div class="col-md-3">
+    <label class="form-label">&nbsp;</label>
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-check me-1"></i> Terapkan
+        </button>
+        <a href="manage.php" class="btn btn-secondary">
+            <i class="fas fa-times me-1"></i> Reset
+        </a>
+    </div>
+</div>
+</form>
 
-                    <!-- Tabel Pengajuan -->
-                    <div class="card">
-                        <div class="card-header bg-white">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0">Daftar Pengajuan</h5>
+                        <!-- Info Filter Aktif -->
+                        <?php if (!empty($filter_status) || !empty($filter_dari) || !empty($filter_sampai)): ?>
+                            <div class="mt-3 p-2 bg-light rounded">
                                 <small class="text-muted">
-                                    Menampilkan <?php echo count($pengajuan); ?> data
-                                    <?php if (!empty($filter_status) || !empty($filter_dari) || !empty($filter_sampai)): ?>
-                                        (difilter)
-                                    <?php endif; ?>
+                                    <strong>Filter Aktif:</strong>
+                                    <?php
+                                    $active_filters = [];
+                                    if (!empty($filter_status)) $active_filters[] = "Status: $filter_status";
+                                    if (!empty($filter_dari)) $active_filters[] = "Dari: " . date('d M Y', strtotime($filter_dari));
+                                    if (!empty($filter_sampai)) $active_filters[] = "Sampai: " . date('d M Y', strtotime($filter_sampai));
+                                    echo implode(', ', $active_filters);
+                                    ?>
                                 </small>
                             </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Statistik Cepat -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white text-center">
+                            <div class="card-body py-3">
+                                <h6 class="card-title">Total Pengajuan</h6>
+                                <h4 class="mb-0"><?php echo count($pengajuan); ?></h4>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <?php if (count($pengajuan) > 0): ?>
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead class="table-light">
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-dark text-center">
+                            <div class="card-body py-3">
+                                <h6 class="card-title">Menunggu</h6>
+                                <h4 class="mb-0">
+                                    <?php echo count(array_filter($pengajuan, function ($p) {
+                                        return $p['status'] == 'Menunggu';
+                                    })); ?>
+                                </h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white text-center">
+                            <div class="card-body py-3">
+                                <h6 class="card-title">Diperiksa</h6>
+                                <h4 class="mb-0">
+                                    <?php echo count(array_filter($pengajuan, function ($p) {
+                                        return $p['status'] == 'Diperiksa';
+                                    })); ?>
+                                </h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white text-center">
+                            <div class="card-body py-3">
+                                <h6 class="card-title">Disetujui</h6>
+                                <h4 class="mb-0">
+                                    <?php echo count(array_filter($pengajuan, function ($p) {
+                                        return $p['status'] == 'Disetujui' || $p['status'] == 'Disetujui Sebagian';
+                                    })); ?>
+                                </h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabel Pengajuan -->
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Daftar Pengajuan</h5>
+                            <small class="text-muted">
+                                Menampilkan <?php echo count($pengajuan); ?> data
+                                <?php if (!empty($filter_status) || !empty($filter_dari) || !empty($filter_sampai)): ?>
+                                    (difilter)
+                                <?php endif; ?>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <?php if (count($pengajuan) > 0): ?>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Tanggal</th>
+                                            <th>User</th>
+                                            <th>Departemen</th>
+                                            <th>Jumlah</th>
+                                            <th>Jumlah ACC</th> <!-- kolom baru -->
+                                            <th>Status</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($pengajuan as $p): ?>
                                             <tr>
-                                                <th>Tanggal</th>
-                                                <th>User</th>
-                                                <th>Departemen</th>
-                                                <th>Jumlah</th>
-                                                <th>Status</th>
-                                                <th>Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php foreach ($pengajuan as $p): ?>
-                                                <tr>
-                                                    <td>
-                                                        <div><?php
-                                                                echo formatDateIndonesian($p['tanggal']);
-                                                                ?></div>
-                                                        <small class="text-muted">
-                                                            <?php echo date('H:i', strtotime($p['tanggal'])); ?>
-                                                        </small>
-                                                    </td>
-                                                    <td><?php echo htmlspecialchars($p['username']); ?></td>
-                                                    <td><?php echo htmlspecialchars($p['department']); ?></td>
-                                                    <td>
-                                                        <span class="badge bg-secondary"><?php echo $p['jumlah']; ?> paket</span>
-                                                    </td>
-                                                    <td>
-                                                        <?php
-                                                        $badge_class = 'badge-' . strtolower($p['status']);
-                                                        ?>
+                                                <td>
+                                                    <div><?php echo date('d M Y', strtotime($p['tanggal'])); ?></div>
+                                                    <small class="text-muted">
+                                                        <?php echo date('H:i', strtotime($p['tanggal'])); ?>
+                                                    </small>
+                                                </td>
+                                                <td><?php echo htmlspecialchars($p['username']); ?></td>
+                                                <td><?php echo htmlspecialchars($p['department']); ?></td>
+                                                <td>
+                                                    <span class="badge bg-secondary"><?php echo $p['jumlah']; ?> paket</span>
+                                                </td>
+                                                <td>
+                                                    <?php
+                                                    // Tampilkan jumlah_disetujui jika tersedia, jika null tampilkan teks 'Belum'
+                                                    if (isset($p['jumlah_disetujui']) && $p['jumlah_disetujui'] !== null) {
+                                                        echo '<span class="badge bg-success">' . htmlspecialchars($p['jumlah_disetujui']) . ' paket</span>';
+                                                    } else {
+                                                        echo '<span class="badge bg-secondary">Belum cek</span>';
+                                                    }
+                                                    ?>
+                                                </td>
+                                                <td>
+                                                    <?php
+                                                    $badge_class = 'badge-' . strtolower(str_replace(' ', '-', $p['status']));
+                                                    ?>
                                                         <span class="badge <?php echo $badge_class; ?>"><?php echo $p['status']; ?></span>
                                                     </td>
                                                     <td>
-                                                        <div class="btn-group">
-                                                            <a href="manage.php?view=<?php echo $p['id']; ?>" class="btn btn-sm btn-outline-primary">
-                                                                <i class="fas fa-eye me-1"></i>Lihat Penerima
-                                                            </a>
-                                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editModal<?php echo $p['id']; ?>">
-                                                                <i class="fas fa-edit me-1"></i>Ubah Status
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            <?php else: ?>
-                                <div class="text-center py-5">
-                                    <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
-                                    <p class="text-muted">
-                                        <?php if (!empty($filter_status) || !empty($filter_dari) || !empty($filter_sampai)): ?>
-                                            Tidak ada pengajuan yang sesuai dengan filter yang dipilih.
-                                        <?php else: ?>
-                                            Belum ada pengajuan fooding.
-                                        <?php endif; ?>
-                                    </p>
+                                                    <div class="btn-group">
+                                                        <a href="manage.php?view=<?php echo $p['id']; ?>" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-eye me-1"></i>Lihat Penerima
+                                                        </a>
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editModal<?php echo $p['id']; ?>">
+                                                            <i class="fas fa-edit me-1"></i>Ubah Status
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php else: ?>
+                            <div class="text-center py-5">
+                                <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                                <p class="text-muted">
                                     <?php if (!empty($filter_status) || !empty($filter_dari) || !empty($filter_sampai)): ?>
-                                        <a href="manage.php" class="btn btn-primary mt-2">
-                                            <i class="fas fa-times me-2"></i>Hapus Filter
-                                        </a>
+                                        Tidak ada pengajuan yang sesuai dengan filter yang dipilih.
+                                    <?php else: ?>
+                                        Belum ada pengajuan fooding.
                                     <?php endif; ?>
-                                </div>
-                            <?php endif; ?>
-                        </div>
+                                </p>
+                                <?php if (!empty($filter_status) || !empty($filter_dari) || !empty($filter_sampai)): ?>
+                                    <a href="manage.php" class="btn btn-primary mt-2">
+                                        <i class="fas fa-times me-2"></i>Hapus Filter
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
-
-                    <!-- Modal untuk Ubah Status -->
-                    <?php foreach ($pengajuan as $p): ?>
-                        <div class="modal fade" id="editModal<?php echo $p['id']; ?>" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Ubah Status Pengajuan</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <form method="POST">
-                                        <input type="hidden" name="request_id" value="<?php echo $p['id']; ?>">
-                                        <div class="modal-body">
-                                            <div class="row mb-3">
-                                                <div class="col-6">
-                                                    <label class="form-label">User</label>
-                                                    <input type="text" class="form-control"
-                                                        value="<?php echo htmlspecialchars($p['username']); ?>" readonly>
-                                                </div>
-                                                <div class="col-6">
-                                                    <label class="form-label">Jumlah</label>
-                                                    <input type="text" class="form-control"
-                                                        value="<?php echo $p['jumlah']; ?> paket" readonly>
-                                                </div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Status Saat Ini</label>
-                                                <input type="text" class="form-control"
-                                                    value="<?php echo $p['status']; ?>" readonly>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Status Baru</label>
-                                                <select class="form-select" name="status" required>
-                                                    <option value="Menunggu" <?php echo $p['status'] == 'Menunggu' ? 'selected' : ''; ?>>Menunggu</option>
-                                                    <option value="Diperiksa" <?php echo $p['status'] == 'Diperiksa' ? 'selected' : ''; ?>>Diperiksa</option>
-                                                    <option value="Disetujui" <?php echo $p['status'] == 'Disetujui' ? 'selected' : ''; ?>>Disetujui</option>
-                                                    <option value="Ditolak" <?php echo $p['status'] == 'Ditolak' ? 'selected' : ''; ?>>Ditolak</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                                            <button type="submit" name="update_status" class="btn btn-primary">Simpan Perubahan</button>
-                                        </div>
-                                    </form>
+                </div>
+                
+                <!-- Modal untuk Ubah Status -->
+                <?php foreach ($pengajuan as $p): ?>
+                    <div class="modal fade" id="editModal<?php echo $p['id']; ?>" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Ubah Status Pengajuan</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
+                                <form method="POST">
+                                    <input type="hidden" name="request_id" value="<?php echo $p['id']; ?>">
+                                    <div class="modal-body">
+                                        <div class="row mb-3">
+                                            <div class="col-6">
+                                                <label class="form-label">User</label>
+                                                <input type="text" class="form-control"
+                                                    value="<?php echo htmlspecialchars($p['username']); ?>" readonly>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label">Jumlah</label>
+                                                <input type="text" class="form-control"
+                                                    value="<?php echo $p['jumlah']; ?> paket" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Status Saat Ini</label>
+                                            <input type="text" class="form-control"
+                                                value="<?php echo $p['status']; ?>" readonly>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Status Baru</label>
+                                            <select class="form-select" name="status" required>
+                                                <option value="Menunggu" <?php echo $p['status'] == 'Menunggu' ? 'selected' : ''; ?>>Menunggu</option>
+                                                <option value="Diperiksa" <?php echo $p['status'] == 'Diperiksa' ? 'selected' : ''; ?>>Diperiksa</option>
+                                                <option value="Disetujui" <?php echo $p['status'] == 'Disetujui' ? 'selected' : ''; ?>>Disetujui</option>
+                                                <option value="Ditolak" <?php echo $p['status'] == 'Ditolak' ? 'selected' : ''; ?>>Ditolak</option>
+                                                <option value="Disetujui Sebagian" <?php echo $p['status'] == 'Disetujui Sebagian' ? 'selected' : ''; ?>>Disetujui Sebagian</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                        <button type="submit" name="update_status" class="btn btn-primary">Simpan Perubahan</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
-                    <?php endforeach; ?>
-
-                <?php endif; ?>
-            </div>
+                    </div>
+                <?php endforeach; ?>
+                
+            <?php endif; ?>
         </div>
     </div>
+</div>
 
-    <?php include '../components/footer.php'; ?>
+<?php include '../components/footer.php'; ?>
 
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+   // Ganti fungsi setRecipientStatus dengan event listener untuk form submission
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle konfirmasi untuk semua form approval
+    const approvalForms = document.querySelectorAll('form[method="POST"]');
+    
+    approvalForms.forEach(form => {
+    form.addEventListener('submit', function(e) {
+        const status = this.querySelector('input[name="recipient_status"]') ? this.querySelector('input[name="recipient_status"]').value : (this.querySelector('select[name="status"]') ? this.querySelector('select[name="status"]').value : '');
+        const recipientNameEl = this.closest('tr') ? this.closest('tr').querySelector('td:nth-child(2)') : null;
+        const recipientName = recipientNameEl ? recipientNameEl.textContent : '';
+        
+        // tanpa konfirmasi, biarkan submit langsung berjalan
+        console.log(`Form dikirim otomatis untuk status: ${status}, penerima: ${recipientName}`);
+    });
+});
 
-    <script>
-        // Toggle filter form
-        document.getElementById('filterToggle')?.addEventListener('click', function() {
-            const filterForm = document.getElementById('filterForm');
-            if (filterForm) {
-                filterForm.classList.toggle('d-none');
-            }
+    
+    // Fungsi lainnya tetap
+    document.getElementById('filterToggle')?.addEventListener('click', function() {
+        document.getElementById('filterForm').classList.toggle('d-none');
+    });
+
+    // Auto-close alerts setelah 5 detik
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
         });
-
-        // Auto-close alerts setelah 5 detik
-        setTimeout(() => {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            });
-        }, 5000);
-
-        // Fungsi untuk set status penerima - DIPERBAIKI
-        function setRecipientStatus(button, status) {
-            if (confirm(`Apakah Anda yakin ingin ${status.toLowerCase()} penerima ini?`)) {
-                const form = button.closest('form');
-                const statusInput = form.querySelector('input[name="recipient_status"]');
-                statusInput.value = status;
-
-                // Submit form
-                form.submit();
-            }
-        }
-    </script>
-
-</body>
-
-</html>
+    }, 5000);
+});
+</script>

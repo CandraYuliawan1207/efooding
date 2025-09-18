@@ -64,6 +64,9 @@ foreach ($stats as $stat) {
         case 'Disetujui':
             $status_colors[] = '#4cc9f0';
             break;
+        case 'Disetujui Sebagian':
+            $status_colors[] = '#f9c74f';
+            break;
         case 'Menunggu':
             $status_colors[] = '#f9c74f';
             break;
@@ -102,6 +105,7 @@ foreach ($stats as $stat) {
                             <option value="Menunggu" <?php echo $filter_status == 'Menunggu' ? 'selected' : ''; ?>>Menunggu</option>
                             <option value="Diperiksa" <?php echo $filter_status == 'Diperiksa' ? 'selected' : ''; ?>>Diperiksa</option>
                             <option value="Disetujui" <?php echo $filter_status == 'Disetujui' ? 'selected' : ''; ?>>Disetujui</option>
+                            <option value="Disetujui Sebagian" <?php echo $filter_status == 'Disetujui Sebagian' ? 'selected' : ''; ?>>Disetujui Sebagian</option>
                             <option value="Ditolak" <?php echo $filter_status == 'Ditolak' ? 'selected' : ''; ?>>Ditolak</option>
                         </select>
                     </div>
@@ -206,6 +210,9 @@ foreach ($stats as $stat) {
                                                 case 'Disetujui':
                                                     $badge_class = 'bg-success';
                                                     break;
+                                                case 'Disetujui Sebagian':
+                                                    $badge_class = 'bg-warning';
+                                                    break;
                                                 case 'Ditolak':
                                                     $badge_class = 'bg-danger';
                                                     break;
@@ -215,6 +222,8 @@ foreach ($stats as $stat) {
                                         </td>
                                         <td>
                                             <?php if ($r['status'] == 'Disetujui'): ?>
+                                                <span class="text-success"><i class="fas fa-check-circle me-1"></i>Dapat diambil di waserda</span>
+                                            <?php elseif ($r['status'] == 'Disetujui Sebagian'): ?>
                                                 <span class="text-success"><i class="fas fa-check-circle me-1"></i>Dapat diambil di waserda</span>
                                             <?php elseif ($r['status'] == 'Ditolak'): ?>
                                                 <span class="text-danger"><i class="fas fa-times-circle me-1"></i>Silakan hubungi admin</span>
