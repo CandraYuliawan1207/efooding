@@ -121,7 +121,7 @@ require_once 'functions.php';
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
-                                    <a class="dropdown-item" href="../user/dashboard.php">
+                                    <a class="dropdown-item" href="../user/profil.php">
                                         <i class="fas fa-user me-2"></i>Profil
                                     </a>
                                 </li>
@@ -148,8 +148,8 @@ require_once 'functions.php';
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
-                                    <a class="dropdown-item" href="../admin/dashboard.php">
-                                        <i class="fas fa-cog me-2"></i>Pengaturan
+                                    <a class="dropdown-item text-muted" href="#" readonly>
+                                        <i class="fas fa-cog me-2"></i>Settings <br><span class="text-muted" style="font-size: 0.7rem;">(coming soon)</span>
                                     </a>
                                 </li>
                                 <li>
