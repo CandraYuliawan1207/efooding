@@ -10,6 +10,11 @@ require_once 'functions.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Fooding - PT. Selatan Agro Makmur Lestari</title>
 
+    <!-- favicon -->
+    <link rel="icon" href="../assets/images/logo_light.svg" type="image/svg+xml">
+    <link rel="shortcut icon" href="../assets/images/logo_light.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="../assets/images/logo_light.svg">
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,11 +49,9 @@ require_once 'functions.php';
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background: rgba(0, 0, 0, 0.95);">
         <div class="container">
             <a class="navbar-brand" href="../index.php">
-                <div class="brand-logo">
-                    <i class="fas fa-utensils me-2"></i>
-                    <span>E-Fooding</span>
-                </div>
+                <img src="../assets/images/logo_light.svg" alt="E-Fooding Logo"style="height: 60px; width: auto;">
             </a>
+
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
