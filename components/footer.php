@@ -1,4 +1,4 @@
-    </div>
+</div>
     </main>
 
     <!-- Footer -->
@@ -23,11 +23,11 @@
                     </p>
                     <p class="mb-2">
                         <i class="fas fa-phone me-2 text-primary"></i>
-                        +62 812-3456-7890
+                        +62 822-8207-6291
                     </p>
                     <p class="mb-0">
                         <i class="fas fa-envelope me-2 text-primary"></i>
-                        info@selatanagro.com
+                        cyuliawan275@gmail.com
                     </p>
                 </div>
 
@@ -36,22 +36,17 @@
                     <h6 class="text-uppercase fw-bold mb-3">Quick Links</h6>
                     <ul class="list-unstyled">
                         <li class="mb-2">
-                            <a href="../dashboard.php" class="text-white text-decoration-none">
+                            <a href="<?php echo getDashboardUrl(); ?>" class="text-white text-decoration-none">
                                 <i class="fas fa-home me-2 text-primary"></i>Dashboard
                             </a>
                         </li>
                         <li class="mb-2">
-                            <a href="../about.php" class="text-white text-decoration-none">
+                            <a href="<?php echo getAboutUrl(); ?>" class="text-white text-decoration-none">
                                 <i class="fas fa-info-circle me-2 text-primary"></i>Tentang Kami
                             </a>
                         </li>
                         <li class="mb-2">
-                            <a href="../help.php" class="text-white text-decoration-none">
-                                <i class="fas fa-question-circle me-2 text-primary"></i>Bantuan
-                            </a>
-                        </li>
-                        <li class="mb-2">
-                            <a href="../contact.php" class="text-white text-decoration-none">
+                            <a href="<?php echo getContactUrl(); ?>" class="text-white text-decoration-none">
                                 <i class="fas fa-phone-alt me-2 text-primary"></i>Kontak
                             </a>
                         </li>
@@ -62,24 +57,24 @@
                 <div class="col-lg-3 col-md-6 mb-4">
                     <h6 class="text-uppercase fw-bold mb-3">System Info</h6>
                     <div class="d-flex align-items-center mb-2">
-                        <span class="badge bg-primary me-2">v1.0.0</span>
-                        <small class="text-muted">Production</small>
+                        <span class="badge bg-primary me-2">v1.0</span>
+                        <small class="text-light">Production</small>
                     </div>
                     <div class="mb-2">
-                        <small class="text-muted">
-                            <i class="fas fa-database me-1"></i>
+                        <small class="text-light">
+                            <i class="fas fa-database me-1 text-primary"></i>
                             MySQL 8.0
                         </small>
                     </div>
                     <div class="mb-2">
-                        <small class="text-muted">
-                            <i class="fas fa-code me-1"></i>
+                        <small class="text-light">
+                            <i class="fas fa-code me-1 text-primary"></i>
                             PHP 8.1+
                         </small>
                     </div>
                     <div>
-                        <small class="text-muted">
-                            <i class="fas fa-shield-alt me-1"></i>
+                        <small class="text-light">
+                            <i class="fas fa-shield-alt me-1 text-primary"></i>
                             SSL Secured
                         </small>
                     </div>
@@ -87,19 +82,19 @@
 
                 <!-- Social Media & Support -->
                 <div class="col-lg-3 col-md-6 mb-4">
-                    <h6 class="text-uppercase fw-bold mb-3">Connect With Us</h6>
+                    <h6 class="text-uppercase fw-bold mb-3">Connect With Developer</h6>
                     <div class="d-flex gap-2 mb-3">
-                        <a href="#" class="btn btn-outline-primary btn-sm rounded-circle">
+                        <a href="https://www.facebook.com/candra.yulyawan.714" target="_blank" class="btn btn-outline-primary btn-sm rounded-circle">
                             <i class="fab fa-facebook-f"></i>
                         </a>
-                        <a href="#" class="btn btn-outline-primary btn-sm rounded-circle">
+                        <a href="https://www.instagram.com/cacanmu" target="_blank" class="btn btn-outline-primary btn-sm rounded-circle">
                             <i class="fab fa-instagram"></i>
                         </a>
-                        <a href="#" class="btn btn-outline-primary btn-sm rounded-circle">
+                        <a href="https://www.linkedin.com/in/candra-yuliawan-2627452b7/" target="_blank" class="btn btn-outline-primary btn-sm rounded-circle">
                             <i class="fab fa-linkedin-in"></i>
                         </a>
-                        <a href="#" class="btn btn-outline-primary btn-sm rounded-circle">
-                            <i class="fab fa-youtube"></i>
+                        <a href="https://github.com/CandraYuliawan1207" target="_blank" class="btn btn-outline-primary btn-sm rounded-circle">
+                            <i class="fab fa-github"></i>
                         </a>
                     </div>
 
@@ -107,13 +102,13 @@
                     <p class="mb-1">
                         <small>
                             <i class="fas fa-clock me-1 text-primary"></i>
-                            Support: 08:00 - 17:00 WIB
+                            08:00 - 15:00 WIB
                         </small>
                     </p>
                     <p class="mb-0">
                         <small>
-                            <i class="fas fa-envelope me-1 text-primary"></i>
-                            support@selatanagro.com
+                            <i class="fab fas fa-whatsapp me-1 text-primary"></i>
+                            0822-6948-2581
                         </small>
                     </p>
                 </div>
@@ -130,9 +125,9 @@
                 </div>
                 <div class="col-md-6 text-md-end">
                     <small class="text-muted">
-                        <a href="../privacy.php" class="text-white text-decoration-none me-3">Privacy Policy</a>
-                        <a href="../terms.php" class="text-white text-decoration-none me-3">Terms of Service</a>
-                        <a href="../sitemap.php" class="text-white text-decoration-none">Sitemap</a>
+                        <a href="<?php echo getPrivacyUrl(); ?>" class="text-white text-decoration-none me-3">Privacy Policy</a>
+                        <a href="<?php echo getTermsUrl(); ?>" class="text-white text-decoration-none me-3">Terms of Service</a>
+                        <a href="<?php echo getSitemapUrl(); ?>" class="text-white text-decoration-none">Sitemap</a>
                     </small>
                 </div>
             </div>
@@ -160,30 +155,75 @@
             // Tooltip initialization
             $('[data-bs-toggle="tooltip"]').tooltip();
 
-            // Back to top button
-            $(window).scroll(function() {
-                if ($(this).scrollTop() > 300) {
-                    $('#backToTop').fadeIn();
-                } else {
-                    $('#backToTop').fadeOut();
-                }
-            });
-
-            $('#backToTop').click(function() {
-                $('html, body').animate({
-                    scrollTop: 0
-                }, 500);
-                return false;
-            });
         });
     </script>
 
-    <!-- Back to Top Button -->
-    <button id="backToTop" class="btn btn-primary rounded-circle shadow"
-        style="position: fixed; bottom: 20px; right: 20px; display: none; z-index: 1000;"
-        data-bs-toggle="tooltip" data-bs-placement="left" title="Kembali ke atas">
-        <i class="fas fa-arrow-up"></i>
-    </button>
-    </body>
+    <?php
+    // Fungsi helper untuk mendapatkan URL berdasarkan session
+    // Menggunakan fungsi yang sama seperti di header (isLoggedIn(), isAdminLoggedIn())
+    
+    function getDashboardUrl() {
+        if (isLoggedIn()) {
+            return '../user/dashboard.php';
+        } elseif (isAdminLoggedIn()) {
+            return '../admin/dashboard.php';
+        }
+        return '../index.php';
+    }
 
-    </html>
+    function getAboutUrl() {
+        if (isLoggedIn()) {
+            return '../user/about.php';
+        } elseif (isAdminLoggedIn()) {
+            return '../admin/about.php';
+        }
+        return '../about.php';
+    }
+
+    function getHelpUrl() {
+        if (isLoggedIn()) {
+            return '../user/help.php';
+        } elseif (isAdminLoggedIn()) {
+            return '../admin/help.php';
+        }
+        return '../help.php';
+    }
+
+    function getContactUrl() {
+        if (isLoggedIn()) {
+            return '../user/contact.php';
+        } elseif (isAdminLoggedIn()) {
+            return '../admin/contact.php';
+        }
+        return '../contact.php';
+    }
+
+    function getPrivacyUrl() {
+        if (isLoggedIn()) {
+            return '../user/privacy.php';
+        } elseif (isAdminLoggedIn()) {
+            return '../admin/privacy.php';
+        }
+        return '../privacy.php';
+    }
+
+    function getTermsUrl() {
+        if (isLoggedIn()) {
+            return '../user/terms.php';
+        } elseif (isAdminLoggedIn()) {
+            return '../admin/terms.php';
+        }
+        return '../terms.php';
+    }
+
+    function getSitemapUrl() {
+        if (isLoggedIn()) {
+            return '../user/sitemap.php';
+        } elseif (isAdminLoggedIn()) {
+            return '../admin/sitemap.php';
+        }
+        return '../sitemap.php';
+    }
+    ?>
+</body>
+</html>
