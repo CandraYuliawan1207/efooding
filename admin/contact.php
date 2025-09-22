@@ -52,7 +52,7 @@ if (isset($_GET['read'])) {
     $stmt->bindParam(':id', $message_id);
     $stmt->execute();
     
-    header("Location: contact.php?page=" . $page);
+    echo "<script>window.location.href = 'contact.php?page=" . $page . "';</script>";
     exit();
 }
 
@@ -64,7 +64,7 @@ if (isset($_GET['delete'])) {
     $stmt->bindParam(':id', $message_id);
     $stmt->execute();
     
-    header("Location: contact.php?page=" . $page);
+    echo "<script>window.location.href = 'contact.php?page=" . $page . "';</script>";
     exit();
 }
 
@@ -74,7 +74,7 @@ if (isset($_GET['mark_all_read'])) {
     $stmt = $db->prepare($query);
     $stmt->execute();
     
-    header("Location: contact.php?page=" . $page);
+    echo "<script>window.location.href = 'contact.php?page=" . $page . "';</script>";
     exit();
 }
 
@@ -521,7 +521,7 @@ $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                <a href="#" id="modal-reply-btn" class="btn btn-primary email-button">
+                <a href="mailto:<?php echo htmlspecialchars($message['email']); ?>?subject=Balas: <?php echo urlencode($message['subjek']); ?>" id="modal-reply-btn" class="btn btn-primary email-button">
                     <i class="fas fa-reply me-1"></i> Balas via Email
                 </a>
             </div>
