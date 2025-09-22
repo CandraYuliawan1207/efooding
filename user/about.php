@@ -192,7 +192,7 @@ include '../components/header.php';
     <div class="container">
         <div class="text-center mb-5">
             <h2 class="display-4 fw-bold">Cara Kerja untuk User</h2>
-            <p class="lead text-muted">Langkah-langkah pengajuan extra fooding</p> <hr style="text-primary">
+            <p class="lead text-muted">Langkah-langkah pengajuan extra fooding</p>
         </div>
         
         <div class="timeline">

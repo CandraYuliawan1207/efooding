@@ -180,15 +180,6 @@
         return '../about.php';
     }
 
-    function getHelpUrl() {
-        if (isLoggedIn()) {
-            return '../user/help.php';
-        } elseif (isAdminLoggedIn()) {
-            return '../admin/help.php';
-        }
-        return '../help.php';
-    }
-
     function getContactUrl() {
         if (isLoggedIn()) {
             return '../user/contact.php';
